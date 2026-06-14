@@ -23,8 +23,10 @@ the open-source engineering worksheet engine.
 
 Clone repository:
 
+```bash
 git clone git@github.com:ExiMentor/calcpad_gui.git
 cd calcpad_gui
+```
 
 Install dependencies:
 
