@@ -28,30 +28,40 @@ cd calcpad_gui
 
 Install dependencies:
 
+```bash
 sudo apt install python3-gi gir1.2-gtk-4.0 \
                  gir1.2-gtksource-5 gir1.2-webkit-6.0 \
                  dotnet-sdk-10.0
+```
 
 Build Calcpad engine:
 
+```bash
 git clone https://github.com/imartincei/CalcpadCE.git
 cd CalcpadCE
 dotnet publish -c Release Calcpad.Cli -o ~/.local/share/CalcpadCE
+```
 
 Set environment variable:
 
+```bash
 export CALCPAD_CLI=$HOME/.local/share/CalcpadCE/Cli.dll
+```
 
 Optional permanent:
 
+```bash
 echo 'export CALCPAD_CLI=$HOME/.local/share/CalcpadCE/Cli.dll' >> ~/.bashrc
 source ~/.bashrc
+```
 
 ---
 
 ## 🚀 Usage
 
+```bash
 python3 -m calcpad_gui
+```
 
 ---
 
