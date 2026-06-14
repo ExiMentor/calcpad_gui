@@ -24,16 +24,21 @@ the open-source engineering worksheet engine.
 Clone repository:
 
 ```bash
-git clone git@github.com:ExiMentor/calcpad_gui.git
+git clone https://github.com/ExiMentor/calcpad_gui.git
 cd calcpad_gui
 ```
 
 Install dependencies:
 
+- Linux Mint 22 / Ubuntu 24.04 / Debian 13:
 ```bash
 sudo apt install python3-gi gir1.2-gtk-4.0 \
                  gir1.2-gtksource-5 gir1.2-webkit-6.0 \
                  dotnet-sdk-10.0
+```
+- Fedora 44:
+```bash
+sudo dnf install dotnet-sdk-10.0
 ```
 
 Build Calcpad engine:
