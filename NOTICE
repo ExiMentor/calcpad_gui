@@ -1,0 +1,27 @@
+calcpad-gui — Linux GTK 4 frontend for CalcpadCE
+================================================
+
+This application is an independent graphical user interface that invokes
+the CalcpadCE command-line tool (Calcpad.Cli) as an external subprocess.
+No source code from CalcpadCE is bundled or directly linked.
+
+Upstream project
+----------------
+CalcpadCE — https://github.com/imartincei/CalcpadCE
+  Released under the MIT License.
+  Copyright (c) 2014-2026 Ned Ganchovski (original Calcpad)
+  Copyright (c) 2026 CalcpadCE Contributors (community fork)
+
+Runtime dependencies (not bundled, installed by the user)
+---------------------------------------------------------
+  * GTK 4              — LGPL-2.1
+  * GtkSourceView 5    — LGPL-2.1
+  * WebKitGTK 6.0      — LGPL-2.1 / BSD
+  * PyGObject          — LGPL-2.1
+  * .NET runtime       — MIT (used to execute Calcpad.Cli)
+
+Calcpad worksheet syntax
+------------------------
+The included GtkSourceView language spec (calcpad.lang) describes the
+public Calcpad worksheet syntax for editor highlighting purposes only.
+It does not reproduce CalcpadCE source code.

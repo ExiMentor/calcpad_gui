@@ -1,0 +1,4 @@
+#!/usr/bin/env python3
+from calcpad_gui.app import main
+import sys
+sys.exit(main())
