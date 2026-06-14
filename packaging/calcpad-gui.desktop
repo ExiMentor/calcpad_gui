@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Calcpad GUI
+Comment=GTK frontend for CalcpadCE
+Exec=calcpad-gui
+Icon=calcpad-gui
+Terminal=false
+Type=Application
+Categories=Development;Engineering;
