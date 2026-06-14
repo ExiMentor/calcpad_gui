@@ -57,8 +57,7 @@ python3 -m calcpad_gui
 
 ## 📸 Screenshots
 
-docs/screenshot-editor.png
-docs/screenshot-preview.png
+docs/preview.png
 
 ---
 
