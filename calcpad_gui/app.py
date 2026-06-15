@@ -4,6 +4,7 @@ CalcpadCE Linux GUI v4 (GTK 4.10+ only)
 Repo: https://github.com/imartincei/CalcpadCE
 """
 from __future__ import annotations
+import re
 import argparse, json, os, shutil, subprocess, sys, tempfile, textwrap, threading
 from pathlib import Path
 import gi
@@ -77,7 +78,7 @@ SYMBOL_TABLE = [
     ("″","double prime",'`\"'),("±","plus-minus",""),
     ("·","middle dot",""),("×","times",""),
     ("÷","divide",""),("≤","less or eq","<="),
-    ("≥","greater or eq",">="),("≠","not equal","!="),
+    ("≥","greater or eq","≥"),("≠","not equal","≠"),
     ("≈","approx",""),("∞","infinity",""),
     ("√","sqrt",""),("∑","sum",""),
     ("∫","integral",""),("∂","partial",""),
@@ -149,6 +150,32 @@ def ensure_calcpad_language():
             lm.set_search_path(paths)
         return lm.get_language("calcpad") is not None
     except OSError:
+        # comments / text:
+        # Calcpad text comments usually start with single or double quotes.
+        # Apply this last so it overrides variables, units and operators.
+        text_tag = self._hl_tags["text"]
+        for line_match in re.finditer(r"(?m)^.*$", text):
+            line = line_match.group(0)
+            line_start = line_match.start()
+
+            quote_positions = [
+                pos for pos in (
+                    line.find('"'),
+                    line.find("'"),
+                    line.find("“"),
+                    line.find("‘"),
+                )
+                if pos >= 0
+            ]
+
+            if not quote_positions:
+                continue
+
+            qpos = min(quote_positions)
+            a = self.buffer.get_iter_at_offset(line_start + qpos)
+            b = self.buffer.get_iter_at_offset(line_match.end())
+            self.buffer.apply_tag(text_tag, a, b)
+
         return False
 
 def load_settings():
@@ -197,6 +224,105 @@ def discover_cli():
                   "  dotnet publish -c Release Calcpad.Cli -o ~/.local/share/CalcpadCE\n"
                   "  export CALCPAD_CLI=$HOME/.local/share/CalcpadCE/Cli.dll")
 
+
+
+def inject_output_scroll_restore(html: str) -> str:
+    """Keep WebKit preview scroll position stable across HTML reloads."""
+    script = r"""
+<script id="calcpad-scroll-restore">
+(function () {
+    const markerY = "calcpadScrollY=";
+    const markerRatio = "calcpadScrollRatio=";
+
+    function getScrollElement() {
+        return document.scrollingElement || document.documentElement || document.body;
+    }
+
+    function getMaxScroll(el) {
+        if (!el) return 0;
+        return Math.max(0, el.scrollHeight - el.clientHeight);
+    }
+
+    function readValue(marker) {
+        const name = String(window.name || "");
+        const idx = name.indexOf(marker);
+        if (idx < 0) return 0;
+
+        const raw = name.slice(idx + marker.length).split(";")[0];
+        const value = parseFloat(raw);
+
+        return Number.isFinite(value) ? value : 0;
+    }
+
+    function writeValue(marker, value) {
+        let name = String(window.name || "");
+        const escaped = marker.replace(/[.*+?^${}()|[\]\]/g, "\$&");
+        name = name.replace(new RegExp(";?" + escaped + "[0-9.]+", "g"), "");
+        window.name = name + ";" + marker + String(Math.max(0, value || 0));
+    }
+
+    function save() {
+        const el = getScrollElement();
+        if (!el) return;
+
+        const y = el.scrollTop || window.scrollY || 0;
+        const max = getMaxScroll(el);
+        const ratio = max > 0 ? y / max : 0;
+
+        writeValue(markerY, y);
+        writeValue(markerRatio, ratio);
+    }
+
+    function restore() {
+        const el = getScrollElement();
+        if (!el) return;
+
+        const savedY = readValue(markerY);
+        const savedRatio = readValue(markerRatio);
+        const max = getMaxScroll(el);
+
+        let targetY = savedY;
+
+        if (max > 0 && savedRatio > 0) {
+            targetY = Math.min(savedY, max);
+            if (savedY > max) {
+                targetY = max * savedRatio;
+            }
+        }
+
+        if (!targetY) return;
+
+        function apply() {
+            window.scrollTo(0, targetY);
+            el.scrollTop = targetY;
+        }
+
+        apply();
+        setTimeout(apply, 50);
+        setTimeout(apply, 150);
+        setTimeout(apply, 350);
+        setTimeout(apply, 700);
+    }
+
+    window.addEventListener("scroll", save, { passive: true });
+    window.addEventListener("beforeunload", save);
+    window.addEventListener("DOMContentLoaded", restore);
+    window.addEventListener("load", restore);
+})();
+</script>
+"""
+
+    if 'id="calcpad-scroll-restore"' in html:
+        return html
+
+    lower = html.lower()
+    body_idx = lower.rfind("</body>")
+
+    if body_idx >= 0:
+        return html[:body_idx] + script + html[body_idx:]
+
+    return html + script
+
 class CalcpadWindow(Gtk.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app, title=APP_TITLE)
@@ -224,10 +350,348 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
         self._build_headerbar()
         self._build_layout()
+        self._setup_zoom_controls()
+        self._setup_line_navigation_controls()
         self._install_shortcuts()
         self.buffer.connect("modified-changed", self._on_modified_changed)
+        self.buffer.connect("notify::cursor-position", self._on_editor_cursor_position_changed)
+        self._setup_editor_highlighting()
         self.connect("close-request", self._on_close_request)
         GLib.timeout_add(400, self._initial_run)
+
+
+    def _setup_editor_highlighting(self):
+        self._editor_highlight_source_id = 0
+
+        try:
+            self.buffer.set_highlight_syntax(False)
+        except Exception:
+            pass
+
+        self._hl_tags = {
+            "var": self.buffer.create_tag("calc-var", foreground="#0066dd"),
+            "unit": self.buffer.create_tag("calc-unit", foreground="#119911"),
+            "func": self.buffer.create_tag("calc-func", foreground="#7a3db8"),
+            "number": self.buffer.create_tag("calc-number", foreground="#cc0088"),
+            "bracket": self.buffer.create_tag("calc-bracket", foreground="#cc0088"),
+            "op": self.buffer.create_tag("calc-op", foreground="#c08030"),
+            "keyword": self.buffer.create_tag("calc-keyword", foreground="#cc0088"),
+            "text": self.buffer.create_tag("calc-text", foreground="#006400"),
+        }
+
+        self.buffer.connect("changed", self._schedule_editor_highlighting)
+        GLib.idle_add(self._apply_editor_highlighting)
+
+    def _schedule_editor_highlighting(self, *_args):
+        if getattr(self, "_editor_highlight_source_id", 0):
+            GLib.source_remove(self._editor_highlight_source_id)
+
+        self._editor_highlight_source_id = GLib.timeout_add(
+            120, self._apply_editor_highlighting
+        )
+
+    def _apply_editor_highlighting(self):
+        self._editor_highlight_source_id = 0
+
+        start = self.buffer.get_start_iter()
+        end = self.buffer.get_end_iter()
+        text = self.buffer.get_text(start, end, False)
+
+        for tag in self._hl_tags.values():
+            self.buffer.remove_tag(tag, start, end)
+
+        def apply_range(tag_name, a_off, b_off):
+            if b_off <= a_off:
+                return
+            a = self.buffer.get_iter_at_offset(a_off)
+            b = self.buffer.get_iter_at_offset(b_off)
+            self.buffer.apply_tag(self._hl_tags[tag_name], a, b)
+
+        def apply_regex(tag_name, pattern, flags=0):
+            for m in re.finditer(pattern, text, flags):
+                apply_range(tag_name, m.start(), m.end())
+
+        # 1) full comment/text lines first collected, applied last
+        comment_ranges = []
+        for m in re.finditer(r"(?m)^[ \t]*[\"'“‘].*$", text):
+            comment_ranges.append((m.start(), m.end()))
+
+        def in_comment(pos):
+            return any(a <= pos < b for a, b in comment_ranges)
+
+        # 2) variable name only left of '='
+        for m in re.finditer(r"(?m)^[ \t]*([A-Za-z_Α-Ωα-ωµμ][A-Za-z0-9_Α-Ωα-ωµμ]*)[ \t]*=", text):
+            if not in_comment(m.start(1)):
+                apply_range("var", m.start(1), m.end(1))
+
+        # 3) functions
+        for m in re.finditer(
+            r"\b(?:sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|sqrt|root|root2|ln|log|exp|abs|min|max|round|trunc|floor|ceiling|random|sign|conj|re|im|phase|area|slope|sup|inf)\b(?=\s*\()",
+            text,
+            re.IGNORECASE
+        ):
+            if not in_comment(m.start()):
+                apply_range("func", m.start(), m.end())
+
+        # 4) units
+        unit_pattern = r"(?<![A-Za-z_])(?:MΩ|kΩ|Ω|µF|μF|uF|mF|nF|pF|µH|μH|uH|mH|nH|µV|μV|uV|mV|kV|V|µA|μA|uA|mA|A|mW|kW|W|MHz|kHz|Hz|MPa|kPa|Pa|mm|cm|km|ms|°C|K|m|s)(?![A-Za-z_])"
+        for m in re.finditer(unit_pattern, text):
+            if not in_comment(m.start()):
+                apply_range("unit", m.start(), m.end())
+
+        # 5) operators
+        for m in re.finditer(r"[+\-*/^=<>≤≥≠%∑∏√·×]", text):
+            if not in_comment(m.start()):
+                apply_range("op", m.start(), m.end())
+
+        # 6) brackets
+        for m in re.finditer(r"[()\[\]{}]", text):
+            if not in_comment(m.start()):
+                apply_range("bracket", m.start(), m.end())
+
+        # 7) directives
+        for m in re.finditer(
+            r"(?m)^\s*#(?:if|else|end\s+if|for|repeat|loop|break|include|hide|show|pre|post)\b",
+            text,
+            re.IGNORECASE
+        ):
+            if not in_comment(m.start()):
+                apply_range("keyword", m.start(), m.end())
+
+        # 8) comments/text last so they override everything
+        for a, b in comment_ranges:
+            apply_range("text", a, b)
+
+        return False
+
+
+    def _setup_zoom_controls(self):
+        self._zoom_level = 1.0
+        self._editor_css_provider = Gtk.CssProvider()
+
+        try:
+            self.editor.add_css_class("calcpad-editor")
+        except Exception:
+            pass
+
+        self._apply_zoom()
+
+        editor_scroll = Gtk.EventControllerScroll.new(
+            Gtk.EventControllerScrollFlags.VERTICAL
+        )
+        editor_scroll.connect("scroll", self._on_ctrl_scroll_zoom)
+        self.editor.add_controller(editor_scroll)
+
+        preview_scroll = Gtk.EventControllerScroll.new(
+            Gtk.EventControllerScrollFlags.VERTICAL
+        )
+        preview_scroll.connect("scroll", self._on_ctrl_scroll_zoom)
+        self.webview.add_controller(preview_scroll)
+
+    def _on_ctrl_scroll_zoom(self, controller, dx, dy):
+        try:
+            state = controller.get_current_event_state()
+        except Exception:
+            state = 0
+
+        if not (state & Gdk.ModifierType.CONTROL_MASK):
+            return False
+
+        if dy < 0:
+            self._zoom_level += 0.1
+        elif dy > 0:
+            self._zoom_level -= 0.1
+        else:
+            return True
+
+        self._zoom_level = max(0.7, min(1.8, self._zoom_level))
+        self._apply_zoom()
+        return True
+
+    def _apply_zoom(self):
+        zoom = getattr(self, "_zoom_level", 1.0)
+
+        # Editor font size
+        font_px = int(14 * zoom)
+        css = f"""
+        .calcpad-editor {{
+            font-size: {font_px}px;
+        }}
+        """
+        try:
+            self._editor_css_provider.load_from_data(css.encode("utf-8"))
+            Gtk.StyleContext.add_provider_for_display(
+                Gdk.Display.get_default(),
+                self._editor_css_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+        except Exception:
+            pass
+
+        # WebKit output zoom
+        try:
+            self.webview.set_zoom_level(zoom)
+        except Exception:
+            pass
+
+        try:
+            self.set_status(f"Zoom: {int(zoom * 100)}%")
+        except Exception:
+            pass
+
+
+    def _setup_line_navigation_controls(self):
+        click = Gtk.GestureClick.new()
+        click.connect("pressed", self._on_editor_gutter_click)
+        self.editor.add_controller(click)
+
+    def _on_editor_gutter_click(self, gesture, n_press, x, y):
+        # Kept for compatibility; editor line sync is handled by cursor-position.
+        return
+
+    def _on_editor_cursor_position_changed(self, *_args):
+        if getattr(self, "_editor_line_jump_blocked", False):
+            return
+
+        try:
+            it = self.buffer.get_iter_at_mark(self.buffer.get_insert())
+            line_no = it.get_line() + 1
+
+            if line_no == getattr(self, "_last_editor_line_jump", None):
+                return
+
+            self._last_editor_line_jump = line_no
+            self._scroll_output_to_line(line_no)
+
+        except Exception as exc:
+            print("editor to output line sync failed:", exc)
+
+
+    def _scroll_output_to_line(self, line_no):
+        js = f"""
+        (function () {{
+            const line = document.querySelector('[data-cp-line="{int(line_no)}"]');
+            if (!line) return;
+            line.scrollIntoView({{block: "center", behavior: "instant"}});
+            line.classList.add("cp-line-flash");
+            setTimeout(() => line.classList.remove("cp-line-flash"), 700);
+        }})();
+        """
+        try:
+            self._eval_webview_js(js)
+        except Exception:
+            pass
+
+    def _jump_editor_to_line(self, line_no):
+        try:
+            line = max(0, int(line_no) - 1)
+
+            result = self.buffer.get_iter_at_line(line)
+
+            if isinstance(result, tuple):
+                ok, it = result
+                if not ok:
+                    return
+            else:
+                it = result
+
+            self.buffer.place_cursor(it)
+            self.editor.grab_focus()
+            self.editor.scroll_to_iter(it, 0.15, True, 0.0, 0.35)
+
+        except Exception as exc:
+            print("line jump to editor failed:", exc)
+
+    def _inject_output_line_navigation(self, html):
+        css = """
+<style id="calcpad-clickable-line-numbers">
+.calcpad-output p::before,
+.calcpad-output h1::before,
+.calcpad-output h2::before,
+.calcpad-output h3::before,
+.calcpad-output h4::before,
+.calcpad-output h5::before,
+.calcpad-output h6::before{
+    content:none !important;
+}
+.calcpad-output p,
+.calcpad-output h1,
+.calcpad-output h2,
+.calcpad-output h3,
+.calcpad-output h4,
+.calcpad-output h5,
+.calcpad-output h6{
+    position:relative;
+    padding-left:3.2em;
+}
+.cp-line-no{
+    position:absolute;
+    left:0;
+    top:0;
+    width:2.4em;
+    text-align:right;
+    color:#999;
+    font-family:monospace;
+    font-size:85%;
+    user-select:none;
+    cursor:pointer;
+}
+.cp-line-no:hover{
+    color:#0066dd;
+    text-decoration:underline;
+}
+.cp-line-flash{
+    outline:2px solid rgba(0,102,221,.35);
+    outline-offset:2px;
+}
+</style>
+"""
+        js = """
+<script id="calcpad-clickable-line-script">
+(function () {
+    function installLineNumbers() {
+        const nodes = document.querySelectorAll(
+            ".calcpad-output p,.calcpad-output h1,.calcpad-output h2,.calcpad-output h3,.calcpad-output h4,.calcpad-output h5,.calcpad-output h6"
+        );
+
+        nodes.forEach((node, index) => {
+            if (node.dataset.cpLine) return;
+
+            const line = index + 1;
+            node.dataset.cpLine = String(line);
+
+            const span = document.createElement("span");
+            span.className = "cp-line-no";
+            span.textContent = String(line);
+            span.title = "Jump to editor line " + String(line);
+            span.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                document.title = "__calcpad_jump__:" + String(line);
+            });
+
+            node.insertBefore(span, node.firstChild);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", installLineNumbers);
+    window.addEventListener("load", installLineNumbers);
+    setTimeout(installLineNumbers, 0);
+    setTimeout(installLineNumbers, 100);
+})();
+</script>
+"""
+        insert = css + js
+
+        if 'id="calcpad-clickable-line-script"' in html:
+            return html
+
+        lower = html.lower()
+        idx = lower.rfind("</body>")
+        if idx >= 0:
+            return html[:idx] + insert + html[idx:]
+        return html + insert
+
 
     def _build_headerbar(self):
         header = Gtk.HeaderBar()
@@ -337,7 +801,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
              ("ε", "ε"), ("ζ", "ζ"),
              ("η", "η"), ("θ", "θ")],
             [("4", "4"), ("5", "5"), ("6", "6"), ("/", "/"),
-             ("⊗", "%"), ("x³", "^3"), ("≠", "<>"),
+             ("%", "%"), ("x³", "^3"), ("≠", "≠"),
              ("∨", "or"), ("π", "π"), ("←", "__bksp__"),
              ("cos", "cos("), ("sec", "sec("), ("round", "round("),
              ("trunc", "trunc("), ("im", "im("),
@@ -347,8 +811,8 @@ class CalcpadWindow(Gtk.ApplicationWindow):
              ("ν", "ν"), ("ξ", "ξ"),
              ("ο", "ο"), ("π", "π")],
             [("1", "1"), ("2", "2"), ("3", "3"), ("+", "+"),
-             ("!", "!"), ("xʸ", "^"), ("≤", "<="),
-             ("⊕", "xor"), ("i", "i"), ("↵", "\n"),
+             ("!", "!"), ("xʸ", "^"), ("≤", "≤"),
+             ("xor", "xor"), ("i", "i"), ("↵", "\n"),
              ("tan", "tan("), ("cot", "cot("), ("floor", "floor("),
              ("ceiling", "ceiling("), ("phase", "phase("),
              ("Sup", "sup("), ("Inf", "inf("), ("Product", "∏"),
@@ -357,7 +821,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
              ("υ", "υ"), ("φ", "φ"),
              ("χ", "χ"), ("ψ", "ψ")],
             [("0", "0"), (".", "."), ("=", "="), ("−", "-"),
-             ("10ˣ", "10^"), ("eˣ", "exp("), ("≥", ">="),
+             ("10ˣ", "10^"), ("eˣ", "exp("), ("≥", "≥"),
              ("∠", "∠"), ("(", "("), (")", ")"),
              ("atan2", "atan2("), ("random", "random("), ("abs", "abs("),
              ("sign", "sign("), ("conj", "conj("),
@@ -367,36 +831,99 @@ class CalcpadWindow(Gtk.ApplicationWindow):
              ("″", "″"), ("ø", "ø"),
              ("‰", "‰"), ("aA", "__case__")],
         ]
+        greek_upper_map = {
+            "α": "Α", "β": "Β", "γ": "Γ", "δ": "Δ",
+            "ε": "Ε", "ζ": "Ζ", "η": "Η", "θ": "Θ",
+            "ι": "Ι", "κ": "Κ", "λ": "Λ", "μ": "Μ",
+            "ν": "Ν", "ξ": "Ξ", "ο": "Ο", "π": "Π",
+            "ρ": "Ρ", "ς": "Σ", "σ": "Σ", "τ": "Τ",
+            "υ": "Υ", "φ": "Φ", "χ": "Χ", "ψ": "Ψ",
+            "ω": "Ω", "ϑ": "Θ",
+        }
+        self._greek_upper = False
+        self._greek_buttons = []
+
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         box.set_margin_start(4); box.set_margin_end(4)
         box.set_margin_top(2); box.set_margin_bottom(4)
         box.add_css_class("calcpad-keyboard")
-        for row in rows:
-            row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
-                              spacing=2, homogeneous=True)
-            for item in row:
-                label, action = item[0], item[1]
-                cls = item[2] if len(item) > 2 else None
-                btn = Gtk.Button(label=label)
-                btn.set_can_focus(False)
-                btn.add_css_class("kbd-btn")
-                if cls:
-                    btn.add_css_class(cls)
-                if action == "__clear__":
-                    btn.set_tooltip_text("Clear editor")
-                    btn.connect("clicked", lambda _b: self._kbd_clear())
-                elif action == "__bksp__":
-                    btn.set_tooltip_text("Backspace")
-                    btn.connect("clicked", lambda _b: self._kbd_backspace())
-                elif action == "__case__":
-                    btn.set_tooltip_text("Toggle case")
-                    btn.connect("clicked", lambda _b: None)
-                else:
-                    btn.connect("clicked",
-                                lambda _b, t=action: self.insert_at_cursor(t))
-                row_box.append(btn)
-            box.append(row_box)
+
+        stack = Gtk.Stack()
+        stack.set_vexpand(False)
+        stack.set_hexpand(True)
+
+        switcher = Gtk.StackSwitcher()
+        switcher.set_stack(stack)
+        switcher.set_halign(Gtk.Align.CENTER)
+        box.append(switcher)
+
+        def build_keyboard_page(page_rows, greek_page=False):
+            page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+
+            for row in page_rows:
+                row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
+                                  spacing=2, homogeneous=True)
+
+                for item in row:
+                    label, action = item[0], item[1]
+                    cls = item[2] if len(item) > 2 else None
+
+                    btn = Gtk.Button(label=label)
+                    btn.set_can_focus(False)
+                    btn.add_css_class("kbd-btn")
+                    btn._insert_text = action
+
+                    if greek_page and label in greek_upper_map:
+                        btn._greek_lower = label
+                        btn._greek_upper = greek_upper_map[label]
+                        self._greek_buttons.append(btn)
+
+                    if cls:
+                        btn.add_css_class(cls)
+
+                    if action == "__clear__":
+                        btn.set_tooltip_text("Clear editor")
+                        btn.connect("clicked", lambda _b: self._kbd_clear())
+                    elif action == "__bksp__":
+                        btn.set_tooltip_text("Backspace")
+                        btn.connect("clicked", lambda _b: self._kbd_backspace())
+                    elif action == "__case__":
+                        btn.set_tooltip_text("Toggle Greek upper/lower case")
+                        btn.connect("clicked", lambda _b: self._kbd_toggle_greek_case())
+                    else:
+                        btn.connect("clicked",
+                                    lambda _b: self.insert_at_cursor(getattr(_b, "_insert_text", "")))
+
+                    row_box.append(btn)
+
+                page.append(row_box)
+
+            return page
+
+        basic_rows = [row[:10] for row in rows]
+        function_rows = [row[10:18] for row in rows]
+        greek_rows = [row[18:] for row in rows]
+
+        stack.add_titled(build_keyboard_page(basic_rows), "basic", "Basic")
+        stack.add_titled(build_keyboard_page(function_rows), "functions", "Functions")
+        stack.add_titled(build_keyboard_page(greek_rows, greek_page=True), "greek", "Greek")
+
+        box.append(stack)
         return box
+
+    def _kbd_toggle_greek_case(self):
+        self._greek_upper = not getattr(self, "_greek_upper", False)
+
+        for btn in getattr(self, "_greek_buttons", []):
+            lower = getattr(btn, "_greek_lower", None)
+            upper = getattr(btn, "_greek_upper", None)
+
+            if not lower or not upper:
+                continue
+
+            text = upper if self._greek_upper else lower
+            btn.set_label(text)
+            btn._insert_text = text
 
     def _kbd_clear(self):
         self.buffer.set_text("")
@@ -448,7 +975,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
     def _build_editor(self):
         self.buffer = GtkSource.Buffer()
-        self.buffer.set_highlight_syntax(True)
+        self.buffer.set_highlight_syntax(False)
         lm = GtkSource.LanguageManager.get_default()
         lang = lm.get_language("calcpad") if self._calcpad_lang_ok else None
         if lang: self.buffer.set_language(lang)
@@ -460,20 +987,164 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.editor.set_auto_indent(True); self.editor.set_tab_width(2)
         self.editor.set_insert_spaces_instead_of_tabs(True)
         self.editor.set_highlight_current_line(True)
-        self.editor.set_wrap_mode(Gtk.WrapMode.NONE)
+        self.editor.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         scroll = Gtk.ScrolledWindow()
-        scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         scroll.set_child(self.editor); return scroll
 
     def _build_preview(self):
         self.webview = WebKit.WebView()
+        self.webview.connect("load-changed", self._on_preview_load_changed)
+        self.webview.connect("notify::title", self._on_preview_title_changed)
         self.webview.load_html(self._wrap_preview(
             "<h3 style='color:#888;font-family:sans-serif'>Press Calculate (F5) or start typing...</h3>"
         ), "file:///")
         return self.webview
 
+
+    def _js_value_to_float(self, value, default=0.0):
+        try:
+            if value is None:
+                return default
+            if hasattr(value, "to_double"):
+                return float(value.to_double())
+            if hasattr(value, "to_number"):
+                return float(value.to_number())
+            if hasattr(value, "to_string"):
+                return float(value.to_string())
+        except Exception:
+            return default
+        return default
+
+    def _eval_webview_js(self, script, callback=None):
+        try:
+            return self.webview.evaluate_javascript(
+                script, -1, None, None, None, callback, None
+            )
+        except TypeError:
+            try:
+                return self.webview.evaluate_javascript(
+                    script, -1, None, None, None, callback
+                )
+            except TypeError:
+                try:
+                    return self.webview.run_javascript(script, None, callback, None)
+                except TypeError:
+                    return self.webview.run_javascript(script, None, callback)
+        except Exception:
+            return None
+
+    def _finish_webview_js(self, webview, result):
+        try:
+            if hasattr(webview, "evaluate_javascript_finish"):
+                return webview.evaluate_javascript_finish(result)
+            if hasattr(webview, "run_javascript_finish"):
+                js_result = webview.run_javascript_finish(result)
+                if hasattr(js_result, "get_js_value"):
+                    return js_result.get_js_value()
+                return js_result
+        except Exception:
+            return None
+        return None
+
+    def _load_preview_preserving_scroll(self, html, base_uri):
+        html = self._inject_output_line_navigation(html)
+        y = getattr(self, "_preview_scroll_y", 0)
+
+        script = f"""
+<script id="calcpad-scroll-sync">
+(function () {{
+    const initialY = {float(y)};
+
+    function scrollElement() {{
+        return document.scrollingElement || document.documentElement || document.body;
+    }}
+
+    function saveScroll() {{
+        const el = scrollElement();
+        const y = el ? el.scrollTop : (window.scrollY || 0);
+        document.title = "__calcpad_scroll__:" + String(Math.max(0, Math.round(y)));
+    }}
+
+    function restoreScroll() {{
+        const el = scrollElement();
+        if (el) el.scrollTop = initialY;
+        window.scrollTo(0, initialY);
+    }}
+
+    window.addEventListener("scroll", saveScroll, {{ passive: true }});
+    window.addEventListener("load", restoreScroll);
+    window.addEventListener("DOMContentLoaded", restoreScroll);
+
+    setTimeout(restoreScroll, 50);
+    setTimeout(restoreScroll, 150);
+    setTimeout(restoreScroll, 350);
+    setTimeout(restoreScroll, 700);
+}})();
+</script>
+"""
+
+        if "</body>" in html:
+            html = html.replace("</body>", script + "</body>")
+        else:
+            html += script
+
+        self.webview.load_html(html, base_uri)
+
+    def _on_preview_title_changed(self, webview, _param):
+        title = webview.get_title() or ""
+
+        jump_prefix = "__calcpad_jump__:"
+        if title.startswith(jump_prefix):
+            try:
+                self._jump_editor_to_line(int(float(title[len(jump_prefix):])))
+            except Exception:
+                pass
+            return
+
+        prefix = "__calcpad_scroll__:"
+        if not title.startswith(prefix):
+            return
+
+        try:
+            self._preview_scroll_y = float(title[len(prefix):])
+        except Exception:
+            pass
+
+    def _on_preview_load_changed(self, webview, load_event):
+        try:
+            nick = getattr(load_event, "value_nick", "")
+            if nick and nick != "finished":
+                return
+            if not nick and "FINISHED" not in str(load_event).upper():
+                return
+        except Exception:
+            return
+
+        y = getattr(self, "_preview_scroll_y", 0)
+        if not y:
+            return
+
+        restore_js = f"""
+        (function () {{
+            const y = {float(y)};
+            function restore() {{
+                const el = document.scrollingElement || document.documentElement || document.body;
+                if (el) el.scrollTop = y;
+                window.scrollTo(0, y);
+            }}
+            restore();
+            setTimeout(restore, 50);
+            setTimeout(restore, 150);
+            setTimeout(restore, 350);
+            setTimeout(restore, 700);
+        }})();
+        """
+
+        self._eval_webview_js(restore_js)
+
     def _wrap_preview(self, body):
-        css = "body{font-family:'Segoe UI','Liberation Sans',sans-serif;padding:1em;line-height:1.6;color:#111}.calcpad-output var{font-style:italic;font-family:'Cambria Math','STIX Two Math',serif;color:#0066DD}.calcpad-output i{font-style:italic;font-family:'Cambria Math','STIX Two Math',serif;color:#119911}.eq{display:inline-block;vertical-align:middle}.dvc,.dvr,.dvs{display:inline-block;vertical-align:middle;white-space:nowrap}.dvc{padding-left:2pt;padding-right:2pt;text-align:center;line-height:110%}.dvr{text-align:center;line-height:110%;position:relative;top:-3pt}.dvs{text-align:left;line-height:110%}.dvl{display:block;border-bottom:solid 1pt #444;margin-top:1pt;margin-bottom:1pt}.dvc.down{position:relative;top:.5em}.dvc.up{position:relative;bottom:.6em}.low{font-size:70%;display:inline-block;position:relative;top:1.2em}sub,sup{font-size:70%}.o1{display:inline-block;border-top:1pt solid currentColor;padding-top:1pt;margin-left:-1pt}.r1{display:inline-block;font-size:140%;line-height:60%;vertical-align:-.05em;margin-right:-2pt}.r1::before{content:'\\221a'}.nary{font-size:240%;font-family:'Cambria Math',serif;line-height:70%;display:inline-block;margin:0 2pt;vertical-align:middle;color:#C080F0}.calcpad-output p{margin:.45em 0}"
+        css = "body{font-family:'Segoe UI','Liberation Sans',sans-serif;padding:1em;line-height:1.6;color:#111}.calcpad-output var{font-style:italic;font-family:'Cambria Math','STIX Two Math',serif;color:#0066DD}.calcpad-output i{font-style:italic;font-family:'Cambria Math','STIX Two Math',serif;color:#119911}.eq{display:inline-block;vertical-align:middle}.dvc,.dvr,.dvs{display:inline-block;vertical-align:middle;white-space:nowrap}.dvc{padding-left:2pt;padding-right:2pt;text-align:center;line-height:110%}.dvr{text-align:center;line-height:110%;position:relative;top:-3pt}.dvs{text-align:left;line-height:110%}.dvl{display:block;border-bottom:solid 1pt #444;margin-top:1pt;margin-bottom:1pt}.dvc.down{position:relative;top:.5em}.dvc.up{position:relative;bottom:.6em}.low{font-size:70%;display:inline-block;position:relative;top:1.2em}sub,sup{font-size:70%}.o1{display:inline-block;border-top:1pt solid currentColor;padding-top:1pt;margin-left:-1pt}.r1{display:inline-block;font-size:140%;line-height:60%;vertical-align:-.05em;margin-right:-2pt}.r1::before{content:'\\221a'}.nary{font-size:240%;font-family:'Cambria Math',serif;line-height:70%;display:inline-block;margin:0 2pt;vertical-align:middle;color:#C080F0}.calcpad-output p{margin:.45em 0}.calcpad-output{counter-reset:cp-line;}.calcpad-output p,.calcpad-output h1,.calcpad-output h2,.calcpad-output h3,.calcpad-output h4,.calcpad-output h5,.calcpad-output h6{position:relative;padding-left:3.2em;}.calcpad-output p::before,.calcpad-output h1::before,.calcpad-output h2::before,.calcpad-output h3::before,.calcpad-output h4::before,.calcpad-output h5::before,.calcpad-output h6::before{counter-increment:cp-line;content:counter(cp-line);position:absolute;left:0;top:0;width:2.4em;text-align:right;color:#999;font-family:monospace;font-size:85%;user-select:none;}"
         if self.settings["dark_preview"]:
             css = css + 'body{background:#1e1e1e;color:#e0e0e0}.calcpad-output var{color:#6cb6ff}.calcpad-output i{color:#7ed87e}.dvl{border-bottom-color:#bbb}.o1{border-top-color:#bbb}table,td,th{border-color:#555}a{color:#6cf}pre{background:#111;color:#eee}'
         return ("<!doctype html><html><head><meta charset='utf-8'>"
@@ -658,7 +1329,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             if self.settings.get("decimal_comma", False):
                 html = self._apply_decimal_comma_html(html)
             base = f"file://{Path(out).parent}/"
-            self.webview.load_html(self._wrap_preview(html), base)
+            self._load_preview_preserving_scroll(self._wrap_preview(html), base)
             self.set_status(f"OK - {len(html):,} bytes of output.")
         finally:
             if out:
