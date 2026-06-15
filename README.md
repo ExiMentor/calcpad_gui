@@ -10,12 +10,20 @@ the open-source engineering worksheet engine.
 
 ## ✨ Features
 
-- GtkSourceView editor with syntax highlighting
-- On-screen keyboard with Greek letters, operators & math functions
+- Native GTK 4 desktop interface for Linux
+- GtkSourceView editor with Calcpad-oriented syntax highlighting
+- Editor line wrapping for long input lines
 - Live HTML preview via WebKitGTK
+- Preserved output scroll position during refresh
+- Output line numbers including headings
+- Editor ↔ output line navigation
+- Ctrl + mouse wheel zoom for editor and preview
+- Compact tabbed on-screen keyboard
+- Greek letters with upper/lowercase toggle
 - Light/Dark preview toggle
-- Decimal-comma support
-- Export to HTML, PDF, DOCX
+- Optional decimal-comma display
+- Export options for HTML, PDF and DOCX
+- Desktop integration with launcher and icon
 
 ---
 
