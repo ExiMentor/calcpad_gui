@@ -466,7 +466,8 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
 
     def _setup_zoom_controls(self):
-        self._zoom_level = 1.0
+        self._editor_zoom = 1.0
+        self._preview_zoom = 1.0
         self._editor_css_provider = Gtk.CssProvider()
 
         try:
@@ -474,52 +475,72 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         except Exception:
             pass
 
-        self._apply_zoom()
+        self._apply_editor_zoom()
+        self._apply_preview_zoom()
 
-        editor_scroll = Gtk.EventControllerScroll.new(
-            Gtk.EventControllerScrollFlags.VERTICAL
-        )
-        editor_scroll.connect("scroll", self._on_ctrl_scroll_zoom)
+        editor_scroll = Gtk.EventControllerScroll.new(Gtk.EventControllerScrollFlags.VERTICAL)
+        editor_scroll.connect("scroll", self._on_editor_ctrl_scroll_zoom)
         self.editor.add_controller(editor_scroll)
 
-        preview_scroll = Gtk.EventControllerScroll.new(
-            Gtk.EventControllerScrollFlags.VERTICAL
-        )
-        preview_scroll.connect("scroll", self._on_ctrl_scroll_zoom)
+        preview_scroll = Gtk.EventControllerScroll.new(Gtk.EventControllerScrollFlags.VERTICAL)
+        preview_scroll.connect("scroll", self._on_preview_ctrl_scroll_zoom)
         self.webview.add_controller(preview_scroll)
 
-    def _on_ctrl_scroll_zoom(self, controller, dx, dy):
+    def _zoom_from_scroll(self, current_zoom, controller, dy):
         try:
             state = controller.get_current_event_state()
         except Exception:
             state = 0
 
         if not (state & Gdk.ModifierType.CONTROL_MASK):
-            return False
+            return current_zoom, False
 
         if dy < 0:
-            self._zoom_level += 0.1
+            current_zoom += 0.1
         elif dy > 0:
-            self._zoom_level -= 0.1
+            current_zoom -= 0.1
         else:
-            return True
+            return current_zoom, True
 
-        self._zoom_level = max(0.7, min(1.8, self._zoom_level))
-        self._apply_zoom()
+        return max(0.7, min(2.2, current_zoom)), True
+
+    def _on_editor_ctrl_scroll_zoom(self, controller, dx, dy):
+        zoom, handled = self._zoom_from_scroll(getattr(self, "_editor_zoom", 1.0), controller, dy)
+        if not handled:
+            return False
+
+        self._editor_zoom = zoom
+        self._apply_editor_zoom()
         return True
 
-    def _apply_zoom(self):
-        zoom = getattr(self, "_zoom_level", 1.0)
+    def _on_preview_ctrl_scroll_zoom(self, controller, dx, dy):
+        zoom, handled = self._zoom_from_scroll(getattr(self, "_preview_zoom", 1.0), controller, dy)
+        if not handled:
+            return False
 
-        # Editor font size
+        self._preview_zoom = zoom
+        self._apply_preview_zoom()
+        return True
+
+    def _apply_editor_zoom(self):
+        zoom = getattr(self, "_editor_zoom", 1.0)
         font_px = int(14 * zoom)
+
         css = f"""
-        .calcpad-editor {{
+        textview.calcpad-editor,
+        textview.calcpad-editor text,
+        .calcpad-editor,
+        .calcpad-editor text {{
             font-size: {font_px}px;
         }}
         """
+
         try:
             self._editor_css_provider.load_from_data(css.encode("utf-8"))
+        except TypeError:
+            self._editor_css_provider.load_from_data(css)
+
+        try:
             Gtk.StyleContext.add_provider_for_display(
                 Gdk.Display.get_default(),
                 self._editor_css_provider,
@@ -528,14 +549,21 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         except Exception:
             pass
 
-        # WebKit output zoom
+        try:
+            self.set_status(f"Editor zoom: {int(zoom * 100)}%")
+        except Exception:
+            pass
+
+    def _apply_preview_zoom(self):
+        zoom = getattr(self, "_preview_zoom", 1.0)
+
         try:
             self.webview.set_zoom_level(zoom)
         except Exception:
             pass
 
         try:
-            self.set_status(f"Zoom: {int(zoom * 100)}%")
+            self.set_status(f"Preview zoom: {int(zoom * 100)}%")
         except Exception:
             pass
 
