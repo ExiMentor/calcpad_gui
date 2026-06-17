@@ -328,6 +328,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         super().__init__(application=app, title=APP_TITLE)
         self.set_default_size(1500, 950)
         self.settings = load_settings()
+        self.settings.setdefault("decimal_places", 3)
         self.current_file = None
         self._debounce_id = None
         self._run_busy = False
@@ -338,9 +339,9 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         css = Gtk.CssProvider()
         css.load_from_string(
             ".calcpad-editor textview { font-family: monospace; font-size: 11pt; }"
-            ".kbd-btn { font-size: 10pt; min-width: 38px; min-height: 30px; padding: 1px 4px; }"
+            ".kbd-btn { font-size: 10pt; min-width: 72px; min-height: 30px; padding: 3px 8px; border-radius: 9px; }"
             ".kbd-btn.warn { color: #c43; font-weight: bold; }"
-            ".calcpad-keyboard { background: alpha(@theme_fg_color, 0.05); border-top: 1px solid alpha(@theme_fg_color, 0.15); padding: 2px; }"
+            ".calcpad-keyboard { background: transparent; border-top: none; padding: 6px; }"
             ".status     { padding: 4px 10px; }"
             ".hint       { padding: 0 10px; }"
         )
@@ -352,6 +353,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self._build_layout()
         self._setup_zoom_controls()
         self._setup_line_navigation_controls()
+        self._setup_format_controls()
         self._install_shortcuts()
         self.buffer.connect("modified-changed", self._on_modified_changed)
         self.buffer.connect("notify::cursor-position", self._on_editor_cursor_position_changed)
@@ -524,14 +526,16 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
     def _apply_editor_zoom(self):
         zoom = getattr(self, "_editor_zoom", 1.0)
-        font_px = int(14 * zoom)
+        font_px = int(15 * zoom)
 
         css = f"""
-        textview.calcpad-editor,
-        textview.calcpad-editor text,
-        .calcpad-editor,
-        .calcpad-editor text {{
+        #calcpad-editor,
+        #calcpad-editor text,
+        textview#calcpad-editor,
+        textview#calcpad-editor text {{
+            font-family: "DejaVu Sans Mono", "Liberation Mono", "Monospace", monospace;
             font-size: {font_px}px;
+            line-height: 1.45;
         }}
         """
 
@@ -721,6 +725,77 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         return html + insert
 
 
+    def _setup_format_controls(self):
+        key = Gtk.EventControllerKey.new()
+        key.connect("key-pressed", self._on_format_key_pressed)
+        self.editor.add_controller(key)
+
+    def _on_format_key_pressed(self, controller, keyval, keycode, state):
+        try:
+            is_ctrl = bool(state & Gdk.ModifierType.CONTROL_MASK)
+            is_shift = bool(state & Gdk.ModifierType.SHIFT_MASK)
+        except Exception:
+            return False
+
+        if is_ctrl and is_shift and keyval in (Gdk.KEY_f, Gdk.KEY_F):
+            self._format_current_line()
+            return True
+
+        return False
+
+    def _format_current_line(self, *_args):
+        try:
+            cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
+            line_no = cursor.get_line()
+
+            start = self.buffer.get_iter_at_line(line_no)
+            if isinstance(start, tuple):
+                _ok, start = start
+
+            end = start.copy()
+            if not end.ends_line():
+                end.forward_to_line_end()
+
+            original = self.buffer.get_text(start, end, False)
+            formatted = self._format_calcpad_line(original)
+
+            if formatted == original:
+                return
+
+            self.buffer.begin_user_action()
+            self.buffer.delete(start, end)
+            self.buffer.insert(start, formatted)
+            self.buffer.end_user_action()
+
+        except Exception as exc:
+            print("format current line failed:", exc)
+
+    def _format_calcpad_line(self, line: str) -> str:
+        # Keep comments/text part unchanged.
+        quote_positions = [p for p in (line.find("'"), line.find('"')) if p >= 0]
+        if quote_positions:
+            split_at = min(quote_positions)
+            code = line[:split_at]
+            comment = line[split_at:]
+        else:
+            code = line
+            comment = ""
+
+        # Normalize spacing around common binary operators.
+        code = re.sub(r"\s*(≤|≥|≠|==|!=|=|<|>|\+|\*|/|\\\\|\^)\s*", r" \1 ", code)
+
+        # Minus is tricky because it can be unary. Only space obvious binary minus.
+        code = re.sub(r"(?<=\S)\s+-\s+(?=\S)", " - ", code)
+        code = re.sub(r"(?<=[A-Za-z0-9_)\]Α-Ωα-ωµμ])\s*-\s*(?=[A-Za-z0-9_(\[Α-Ωα-ωµμ])", " - ", code)
+
+        # Clean up duplicated whitespace, but preserve leading indentation.
+        leading = re.match(r"^\s*", code).group(0)
+        body = code[len(leading):]
+        body = re.sub(r"[ \t]+", " ", body).strip()
+
+        return leading + body + comment
+
+
     def _build_headerbar(self):
         header = Gtk.HeaderBar()
         header.set_show_title_buttons(True)
@@ -738,6 +813,11 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         header.pack_start(mkbtn("document-save-as-symbolic","Save As (Ctrl+Shift+S)",self.on_save_as))
         header.pack_start(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL))
         header.pack_start(mkbtn("media-playback-start-symbolic","Calculate (F5)",self.on_run))
+
+        format_btn = Gtk.Button(label="Format")
+        format_btn.set_tooltip_text("Format current line (Ctrl+Shift+F)")
+        format_btn.connect("clicked", self._format_current_line)
+        header.pack_start(format_btn)
 
         export_btn = Gtk.MenuButton(icon_name="document-send-symbolic", tooltip_text="Export")
         menu = Gio.Menu()
@@ -766,8 +846,20 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.comma_toggle.connect("toggled", lambda *_: self.on_run(None))
         header.pack_end(self.comma_toggle)
 
+        self.decimals_spin = Gtk.SpinButton.new_with_range(0, 10, 1)
+        self.decimals_spin.set_value(int(self.settings.get("decimal_places", 3)))
+        self.decimals_spin.set_tooltip_text("Number of decimal places")
+        self.decimals_spin.set_width_chars(2)
+        self.decimals_spin.connect("value-changed", self._on_decimal_places_changed)
+        header.pack_end(self.decimals_spin)
+
     def _on_toggle(self, btn, key):
         self.settings[key] = btn.get_active(); save_settings(self.settings)
+
+    def _on_decimal_places_changed(self, spin):
+        self.settings["decimal_places"] = int(spin.get_value())
+        save_settings(self.settings)
+        self.on_run(None)
 
     def _refresh_recent_menu(self):
         menu = Gio.Menu()
@@ -875,10 +967,14 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         box.set_margin_start(4); box.set_margin_end(4)
         box.set_margin_top(2); box.set_margin_bottom(4)
         box.add_css_class("calcpad-keyboard")
+        box.set_halign(Gtk.Align.CENTER)
+        box.set_hexpand(False)
+        box.set_halign(Gtk.Align.CENTER)
+        box.set_hexpand(False)
 
         stack = Gtk.Stack()
         stack.set_vexpand(False)
-        stack.set_hexpand(True)
+        stack.set_hexpand(False)
 
         switcher = Gtk.StackSwitcher()
         switcher.set_stack(stack)
@@ -887,10 +983,16 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
         def build_keyboard_page(page_rows, greek_page=False):
             page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            page.set_halign(Gtk.Align.CENTER)
+            page.set_hexpand(False)
+            page.set_halign(Gtk.Align.CENTER)
+            page.set_hexpand(False)
 
             for row in page_rows:
                 row_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL,
-                                  spacing=2, homogeneous=True)
+                                  spacing=4, homogeneous=True)
+                row_box.set_halign(Gtk.Align.CENTER)
+                row_box.set_hexpand(False)
 
                 for item in row:
                     label, action = item[0], item[1]
@@ -899,6 +1001,10 @@ class CalcpadWindow(Gtk.ApplicationWindow):
                     btn = Gtk.Button(label=label)
                     btn.set_can_focus(False)
                     btn.add_css_class("kbd-btn")
+                    btn.set_hexpand(False)
+                    btn.set_halign(Gtk.Align.CENTER)
+                    btn.set_size_request(72, 32)
+                    btn.set_size_request(72, 32)
                     btn._insert_text = action
 
                     if greek_page and label in greek_upper_map:
@@ -1015,6 +1121,13 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.editor.set_auto_indent(True); self.editor.set_tab_width(2)
         self.editor.set_insert_spaces_instead_of_tabs(True)
         self.editor.set_highlight_current_line(True)
+        self.editor.set_name("calcpad-editor")
+        self.editor.set_monospace(True)
+        try:
+            self.editor.set_pixels_above_lines(1)
+            self.editor.set_pixels_below_lines(3)
+        except Exception:
+            pass
         self.editor.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         scroll = Gtk.ScrolledWindow()
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
@@ -1171,7 +1284,45 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
         self._eval_webview_js(restore_js)
 
+    def _format_preview_numbers(self, html):
+        try:
+            places = int(self.settings.get("decimal_places", 3))
+        except Exception:
+            places = 3
+
+        places = max(0, min(10, places))
+        use_comma = bool(self.settings.get("decimal_comma", False))
+
+        number_re = re.compile(
+            r"(?<![A-Za-z0-9_.,])([+-]?\d+\.\d+(?:[eE][+-]?\d+)?)(?![A-Za-z0-9_.,])"
+        )
+
+        def format_match(match):
+            raw = match.group(1)
+            try:
+                value = float(raw)
+            except Exception:
+                return raw
+
+            formatted = f"{value:.{places}f}"
+
+            if use_comma:
+                formatted = formatted.replace(".", ",")
+
+            return formatted
+
+        parts = re.split(r"(<[^>]+>)", html)
+
+        for i, part in enumerate(parts):
+            if part.startswith("<") and part.endswith(">"):
+                continue
+            parts[i] = number_re.sub(format_match, part)
+
+        return "".join(parts)
+
+
     def _wrap_preview(self, body):
+        body = self._format_preview_numbers(body)
         css = "body{font-family:'Segoe UI','Liberation Sans',sans-serif;padding:1em;line-height:1.6;color:#111}.calcpad-output var{font-style:italic;font-family:'Cambria Math','STIX Two Math',serif;color:#0066DD}.calcpad-output i{font-style:italic;font-family:'Cambria Math','STIX Two Math',serif;color:#119911}.eq{display:inline-block;vertical-align:middle}.dvc,.dvr,.dvs{display:inline-block;vertical-align:middle;white-space:nowrap}.dvc{padding-left:2pt;padding-right:2pt;text-align:center;line-height:110%}.dvr{text-align:center;line-height:110%;position:relative;top:-3pt}.dvs{text-align:left;line-height:110%}.dvl{display:block;border-bottom:solid 1pt #444;margin-top:1pt;margin-bottom:1pt}.dvc.down{position:relative;top:.5em}.dvc.up{position:relative;bottom:.6em}.low{font-size:70%;display:inline-block;position:relative;top:1.2em}sub,sup{font-size:70%}.o1{display:inline-block;border-top:1pt solid currentColor;padding-top:1pt;margin-left:-1pt}.r1{display:inline-block;font-size:140%;line-height:60%;vertical-align:-.05em;margin-right:-2pt}.r1::before{content:'\\221a'}.nary{font-size:240%;font-family:'Cambria Math',serif;line-height:70%;display:inline-block;margin:0 2pt;vertical-align:middle;color:#C080F0}.calcpad-output p{margin:.45em 0}.calcpad-output{counter-reset:cp-line;}.calcpad-output p,.calcpad-output h1,.calcpad-output h2,.calcpad-output h3,.calcpad-output h4,.calcpad-output h5,.calcpad-output h6{position:relative;padding-left:3.2em;}.calcpad-output p::before,.calcpad-output h1::before,.calcpad-output h2::before,.calcpad-output h3::before,.calcpad-output h4::before,.calcpad-output h5::before,.calcpad-output h6::before{counter-increment:cp-line;content:counter(cp-line);position:absolute;left:0;top:0;width:2.4em;text-align:right;color:#999;font-family:monospace;font-size:85%;user-select:none;}"
         if self.settings["dark_preview"]:
             css = css + 'body{background:#1e1e1e;color:#e0e0e0}.calcpad-output var{color:#6cb6ff}.calcpad-output i{color:#7ed87e}.dvl{border-bottom-color:#bbb}.o1{border-top-color:#bbb}table,td,th{border-color:#555}a{color:#6cf}pre{background:#111;color:#eee}'
@@ -1304,6 +1455,15 @@ class CalcpadWindow(Gtk.ApplicationWindow):
     def _debounced_run(self):
         self._debounce_id = None; self.on_run(None); return False
 
+    def _code_with_decimal_places(self, code: str) -> str:
+        try:
+            places = int(self.settings.get("decimal_places", 3))
+        except Exception:
+            places = 3
+
+        places = max(0, min(15, places))
+        return f"#round {places}\n" + code
+
     def _run_cli(self, out_format, body_only):
         if not self._cli_cmd:
             return None, self._wrap_preview(
@@ -1311,7 +1471,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
                 f"{GLib.markup_escape_text(self._cli_hint)}</pre>")
         try:
             tmp = tempfile.NamedTemporaryFile("w", suffix=".cpd", delete=False, encoding="utf-8")
-            tmp.write(self._get_text()); tmp.close(); in_path = tmp.name
+            tmp.write(self._code_with_decimal_places(self._get_text())); tmp.close(); in_path = tmp.name
         except OSError as e:
             return None, self._wrap_preview(
                 f"<pre style='color:#b00'>Cannot create temp file: {e}</pre>")
