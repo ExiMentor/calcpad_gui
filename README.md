@@ -38,15 +38,18 @@ cd calcpad_gui
 
 Install dependencies:
 
+PDF export requires `wkhtmltopdf`.
+
+
 - Linux Mint 22 / Ubuntu 24.04 / Debian 13:
 ```bash
 sudo apt install python3-gi gir1.2-gtk-4.0 \
                  gir1.2-gtksource-5 gir1.2-webkit-6.0 \
-                 dotnet-sdk-10.0
+                 dotnet-sdk-10.0 wkhtmltopdf
 ```
 - Fedora 44:
 ```bash
-sudo dnf install dotnet-sdk-10.0
+sudo dnf install dotnet-sdk-10.0 wkhtmltopdf
 ```
 
 Build Calcpad engine:
