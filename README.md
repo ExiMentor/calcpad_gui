@@ -86,6 +86,37 @@ python3 -m calcpad_gui
 
 ---
 
+## 🖥️ Desktop Integration
+
+To add Calcpad GUI to the Linux application menu with launcher and icon, run these commands from the repository root:
+
+```bash
+mkdir -p ~/.local/bin ~/.local/share/applications ~/.local/share/pixmaps
+
+cp assets/calcpadce-logo.png ~/.local/share/pixmaps/calcpad-gui.png
+
+printf '%s\n' \
+'#!/bin/bash' \
+'cd "$HOME/Projekte/calcpad_gui" 2>/dev/null || cd "$HOME/Projekte/calcpad-gui" || exit 1' \
+'exec python3 -m calcpad_gui' \
+> ~/.local/bin/calcpad-gui
+
+chmod +x ~/.local/bin/calcpad-gui
+
+printf '%s\n' \
+'[Desktop Entry]' \
+'Name=Calcpad GUI' \
+'Comment=GTK frontend for CalcpadCE' \
+'Exec='"$HOME"'/.local/bin/calcpad-gui' \
+'Icon='"$HOME"'/.local/share/pixmaps/calcpad-gui.png' \
+'Terminal=false' \
+'Type=Application' \
+'Categories=Development;Engineering;' \
+'StartupNotify=true' \
+> ~/.local/share/applications/calcpad-gui.desktop
+
+update-desktop-database ~/.local/share/applications/
+
 ## 📄 License & Credits
 
 This project is released under the MIT License.
