@@ -351,6 +351,15 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
         self._build_headerbar()
         self._build_layout()
+        self._start_with_empty_document()
+
+        if os.environ.get("CALCPAD_GUI_EMPTY") == "1":
+            try:
+                self.buffer.set_text("")
+                self.buffer.set_modified(False)
+                self.current_file = None
+            except Exception:
+                pass
         self._setup_zoom_controls()
         self._setup_line_navigation_controls()
         self._setup_format_controls()
@@ -796,14 +805,40 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         return leading + body + comment
 
 
+    def _start_with_empty_document(self):
+        try:
+            if getattr(self, "current_file", None):
+                return
+
+            self.buffer.set_text("")
+            self.buffer.set_modified(False)
+            self.current_file = None
+        except Exception as e:
+            print("empty startup failed:", e)
+
     def _build_headerbar(self):
         header = Gtk.HeaderBar()
         header.set_show_title_buttons(True)
         self.set_titlebar(header)
+
+        # Subtle project logo in the header bar
+        try:
+            logo_path = Path(__file__).resolve().parent.parent / "assets" / "calcpadce-logo.svg"
+            if not logo_path.exists():
+                logo_path = Path(__file__).resolve().parent.parent / "assets" / "calcpadce-logo.png"
+            if logo_path.exists():
+                logo = Gtk.Image.new_from_file(str(logo_path))
+                logo.set_pixel_size(30)
+                logo.set_opacity(0.9)
+                logo.set_margin_end(8)
+                logo.set_tooltip_text("Calcpad GUI")
+                header.pack_start(logo)
+        except Exception:
+            pass
         def mkbtn(icon, tip, cb):
             b = Gtk.Button.new_from_icon_name(icon)
             b.set_tooltip_text(tip); b.connect("clicked", cb); return b
-        header.pack_start(mkbtn("document-new-symbolic","New (Ctrl+N)",self.on_new))
+        header.pack_start(mkbtn("document-new-symbolic","New Window (Ctrl+N)",self.on_new))
         header.pack_start(mkbtn("document-open-symbolic","Open (Ctrl+O)",self.on_open))
         self.recent_btn = Gtk.MenuButton(
             icon_name="document-open-recent-symbolic", tooltip_text="Open recent")
@@ -1526,9 +1561,16 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             self._run_busy = False
         return False
 
-    def on_new(self, _btn):
-        if self.is_dirty(): self._confirm_discard(lambda ok: ok and self._do_new())
-        else: self._do_new()
+    def on_new(self, _btn=None):
+        try:
+            subprocess.Popen(
+                [sys.executable, "-m", "calcpad_gui"],
+                env={**os.environ, "CALCPAD_GUI_EMPTY": "1"}
+            )
+            self.set_status("Opened new window.")
+        except Exception as e:
+            self.set_status(f"Could not open new window: {e}")
+
 
     def _do_new(self):
         self.buffer.set_text(DEFAULT_SAMPLE); self.buffer.set_modified(False)
@@ -1666,7 +1708,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 class CalcpadApp(Gtk.Application):
     def __init__(self):
         super().__init__(application_id=APP_ID,
-                         flags=Gio.ApplicationFlags.HANDLES_OPEN)
+                         flags=Gio.ApplicationFlags.HANDLES_OPEN | Gio.ApplicationFlags.NON_UNIQUE)
         self._win = None
     def do_activate(self):
         if self._win is None: self._win = CalcpadWindow(self)
