@@ -12,6 +12,7 @@ the open-source engineering worksheet engine.
 
 - Native GTK 4 desktop interface for Linux
 - GtkSourceView editor with Calcpad-oriented syntax highlighting
+- Auto-popup editor autocomplete for functions, units, keywords and document symbols
 - Editor line wrapping for long input lines
 - Live HTML preview via WebKitGTK
 - Preserved output scroll position during refresh

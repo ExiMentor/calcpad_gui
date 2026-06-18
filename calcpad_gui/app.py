@@ -351,6 +351,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
         self._build_headerbar()
         self._build_layout()
+        self._apply_app_theme()
         self._start_with_empty_document()
 
         if os.environ.get("CALCPAD_GUI_EMPTY") == "1":
@@ -363,6 +364,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self._setup_zoom_controls()
         self._setup_line_navigation_controls()
         self._setup_format_controls()
+        self._setup_autocomplete_controls()
         self._install_shortcuts()
         self.buffer.connect("modified-changed", self._on_modified_changed)
         self.buffer.connect("notify::cursor-position", self._on_editor_cursor_position_changed)
@@ -816,6 +818,378 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         except Exception as e:
             print("empty startup failed:", e)
 
+    def _setup_autocomplete_controls(self):
+        self._autocomplete_items = [
+            "sin(", "cos(", "tan(", "asin(", "acos(", "atan(", "atan2(",
+            "sinh(", "cosh(", "tanh(", "sqrt(", "root(", "root2(",
+            "ln(", "log(", "log_2(", "exp(", "abs(",
+            "min(", "max(", "round(", "trunc(", "floor(", "ceiling(",
+            "random(", "sign(", "conj(", "re(", "im(", "phase(",
+            "area(", "slope(", "sup(", "inf(",
+
+            "#if", "#else", "#end if", "#for", "#repeat", "#loop",
+            "#break", "#include", "#hide", "#show", "#pre", "#post",
+            "#round", "#format",
+
+            "mm", "cm", "m", "km",
+            "s", "ms", "min", "h",
+            "V", "mV", "kV",
+            "A", "mA", "µA", "μA",
+            "Ω", "kΩ", "MΩ",
+            "W", "mW", "kW",
+            "F", "mF", "µF", "μF", "nF", "pF",
+            "H", "mH", "µH", "μH", "nH",
+            "Hz", "kHz", "MHz",
+            "Pa", "kPa", "MPa",
+        ]
+
+        self._autocomplete_prefix = ""
+        self._autocomplete_suggestions = []
+        self._autocomplete_index = 0
+        self._autocomplete_update_id = 0
+        self._autocomplete_suppress_once = False
+
+        self._autocomplete_popover = Gtk.Popover()
+        self._autocomplete_popover.set_parent(self.editor)
+        self._autocomplete_popover.set_autohide(False)
+
+        self._autocomplete_list = Gtk.ListBox()
+        self._autocomplete_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        self._autocomplete_list.connect("row-activated", self._on_autocomplete_row_activated)
+        self._autocomplete_popover.set_child(self._autocomplete_list)
+
+        key = Gtk.EventControllerKey.new()
+        try:
+            key.set_propagation_phase(Gtk.PropagationPhase.CAPTURE)
+        except Exception:
+            pass
+        key.connect("key-pressed", self._on_autocomplete_key_pressed)
+        self.editor.add_controller(key)
+
+        self.buffer.connect("changed", self._schedule_autocomplete_update)
+
+    def _schedule_autocomplete_update(self, *_args):
+        if getattr(self, "_autocomplete_suppress_once", False):
+            self._autocomplete_suppress_once = False
+            return
+
+        if getattr(self, "_autocomplete_update_id", 0):
+            try:
+                GLib.source_remove(self._autocomplete_update_id)
+            except Exception:
+                pass
+
+        self._autocomplete_update_id = GLib.timeout_add(120, self._update_autocomplete)
+
+    def _on_autocomplete_key_pressed(self, controller, keyval, keycode, state):
+        if not getattr(self, "_autocomplete_popover", None):
+            return False
+
+        if not self._autocomplete_popover.get_visible():
+            return False
+
+        if keyval == Gdk.KEY_Escape:
+            self._autocomplete_popover.popdown()
+            return True
+
+        if keyval == Gdk.KEY_Down:
+            self._move_autocomplete_selection(1)
+            return True
+
+        if keyval == Gdk.KEY_Up:
+            self._move_autocomplete_selection(-1)
+            return True
+
+        if keyval in (
+            Gdk.KEY_Return,
+            Gdk.KEY_KP_Enter,
+            Gdk.KEY_Tab,
+            Gdk.KEY_ISO_Left_Tab,
+            Gdk.KEY_space,
+        ):
+            self._insert_autocomplete_selection()
+            return True
+
+        return False
+
+    def _update_autocomplete(self):
+        self._autocomplete_update_id = 0
+
+        try:
+            if not self.editor.has_focus():
+                self._autocomplete_popover.popdown()
+                return False
+        except Exception:
+            pass
+
+        prefix = self._get_autocomplete_prefix()
+
+        if len(prefix) < 2:
+            self._autocomplete_popover.popdown()
+            return False
+
+        suggestions = self._get_autocomplete_suggestions(prefix)
+
+        if not suggestions:
+            self._autocomplete_popover.popdown()
+            return False
+
+        self._autocomplete_prefix = prefix
+        self._autocomplete_suggestions = suggestions[:12]
+        self._autocomplete_index = 0
+
+        self._rebuild_autocomplete_list()
+        self._position_autocomplete_popover()
+        self._autocomplete_popover.popup()
+
+        return False
+
+    def _position_autocomplete_popover(self):
+        try:
+            cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
+            rect = self.editor.get_iter_location(cursor)
+
+            try:
+                x, y = self.editor.buffer_to_window_coords(
+                    Gtk.TextWindowType.TEXT,
+                    rect.x,
+                    rect.y + rect.height
+                )
+                rect.x = x
+                rect.y = y
+            except Exception:
+                pass
+
+            self._autocomplete_popover.set_pointing_to(rect)
+        except Exception:
+            pass
+
+    def _get_autocomplete_prefix(self):
+        cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
+        line_start = cursor.copy()
+        line_start.set_line_offset(0)
+
+        line_text = self.buffer.get_text(line_start, cursor, False)
+        stripped = line_text.lstrip()
+
+        # Keine Vorschläge in Text-/Kommentarzeilen
+        if stripped.startswith(("'", '"', "“", "‘")):
+            return ""
+
+        # Keine Vorschläge innerhalb oder nach einem Kommentar-/Textteil
+        quote_positions = [
+            pos for pos in (
+                line_text.find("'"),
+                line_text.find('"'),
+                line_text.find("“"),
+                line_text.find("‘"),
+            )
+            if pos >= 0
+        ]
+
+        if quote_positions:
+            return ""
+
+        match = re.search(
+            r"([#A-Za-z_Α-Ωα-ωµμΩ][#A-Za-z0-9_Α-Ωα-ωµμΩ]*)$",
+            line_text
+        )
+
+        return match.group(1) if match else ""
+
+    def _get_autocomplete_suggestions(self, prefix):
+        prefix_l = prefix.lower()
+
+        items = []
+        items.extend(self._autocomplete_items)
+        items.extend(self._get_document_symbols_above_cursor())
+
+        seen = set()
+        unique = []
+
+        for item in items:
+            key = item.lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(item)
+
+        starts = [item for item in unique if item.lower().startswith(prefix_l)]
+        contains = [
+            item for item in unique
+            if prefix_l in item.lower() and not item.lower().startswith(prefix_l)
+        ]
+
+        return sorted(starts, key=str.lower) + sorted(contains, key=str.lower)
+
+    def _get_document_symbols_above_cursor(self):
+        cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
+        start = self.buffer.get_start_iter()
+        text = self.buffer.get_text(start, cursor, False)
+
+        symbols = set()
+
+        for match in re.finditer(
+            r"(?m)^\s*([A-Za-z_Α-Ωα-ωµμ][A-Za-z0-9_Α-Ωα-ωµμ]*)\s*=",
+            text
+        ):
+            symbols.add(match.group(1))
+
+        for match in re.finditer(
+            r"(?m)^\s*([A-Za-z_Α-Ωα-ωµμ][A-Za-z0-9_Α-Ωα-ωµμ]*)\s*\(",
+            text
+        ):
+            symbols.add(match.group(1) + "(")
+
+        return sorted(symbols, key=str.lower)
+
+    def _rebuild_autocomplete_list(self):
+        child = self._autocomplete_list.get_first_child()
+
+        while child is not None:
+            nxt = child.get_next_sibling()
+            self._autocomplete_list.remove(child)
+            child = nxt
+
+        for item in self._autocomplete_suggestions:
+            label = Gtk.Label(label=item)
+            label.set_xalign(0)
+            label.set_margin_start(8)
+            label.set_margin_end(8)
+            label.set_margin_top(4)
+            label.set_margin_bottom(4)
+
+            row = Gtk.ListBoxRow()
+            row.set_child(label)
+            self._autocomplete_list.append(row)
+
+        row = self._autocomplete_list.get_row_at_index(0)
+        if row:
+            self._autocomplete_list.select_row(row)
+
+    def _move_autocomplete_selection(self, delta):
+        if not self._autocomplete_suggestions:
+            return
+
+        self._autocomplete_index = (
+            self._autocomplete_index + delta
+        ) % len(self._autocomplete_suggestions)
+
+        row = self._autocomplete_list.get_row_at_index(self._autocomplete_index)
+        if row:
+            self._autocomplete_list.select_row(row)
+
+    def _on_autocomplete_row_activated(self, _listbox, row):
+        self._autocomplete_index = row.get_index()
+        self._insert_autocomplete_selection()
+
+    def _insert_autocomplete_selection(self):
+        if not self._autocomplete_suggestions:
+            return
+
+        suggestion = self._autocomplete_suggestions[self._autocomplete_index]
+        prefix = self._autocomplete_prefix
+
+        cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
+        start = cursor.copy()
+
+        try:
+            start.backward_chars(len(prefix))
+        except Exception:
+            return
+
+        self._autocomplete_suppress_once = True
+
+        self.buffer.begin_user_action()
+        self.buffer.delete(start, cursor)
+        self.buffer.insert(start, suggestion)
+        self.buffer.end_user_action()
+
+        self._autocomplete_popover.popdown()
+
+
+    def _apply_app_theme(self):
+        dark = bool(self.settings.get("dark_preview", False))
+
+        # The built-in current-line highlight can be too bright in dark mode.
+        try:
+            self.editor.set_highlight_current_line(not dark)
+        except Exception:
+            pass
+
+        try:
+            gtk_settings = Gtk.Settings.get_default()
+            if gtk_settings:
+                gtk_settings.set_property("gtk-application-prefer-dark-theme", dark)
+        except Exception:
+            pass
+
+        try:
+            if not hasattr(self, "_app_theme_css_provider"):
+                self._app_theme_css_provider = Gtk.CssProvider()
+
+            if dark:
+                css = """
+                #calcpad-editor,
+                #calcpad-editor text,
+                textview#calcpad-editor,
+                textview#calcpad-editor text {
+                    background-color: #1e1e1e;
+                    color: #d8d8d8;
+                    caret-color: #ffffff;
+                }
+
+                #calcpad-editor selection,
+                #calcpad-editor text selection {
+                    background-color: #355a8a;
+                    color: #ffffff;
+                }
+
+                #calcpad-editor gutter,
+                #calcpad-editor gutter text {
+                    background-color: #252525;
+                    color: #8a8a8a;
+                }
+                """
+            else:
+                css = """
+                #calcpad-editor,
+                #calcpad-editor text,
+                textview#calcpad-editor,
+                textview#calcpad-editor text {
+                    background-color: @theme_base_color;
+                    color: @theme_text_color;
+                }
+
+                #calcpad-editor gutter,
+                #calcpad-editor gutter text {
+                    background-color: @theme_base_color;
+                    color: alpha(@theme_text_color, 0.55);
+                }
+                """
+
+            try:
+                self._app_theme_css_provider.load_from_data(css.encode("utf-8"))
+            except TypeError:
+                self._app_theme_css_provider.load_from_data(css)
+
+            Gtk.StyleContext.add_provider_for_display(
+                Gdk.Display.get_default(),
+                self._app_theme_css_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
+        except Exception:
+            pass
+
+        try:
+            if dark:
+                self.add_css_class("dark")
+            else:
+                self.remove_css_class("dark")
+        except Exception:
+            pass
+
+
     def _build_headerbar(self):
         header = Gtk.HeaderBar()
         header.set_show_title_buttons(True)
@@ -870,7 +1244,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.auto_toggle.set_active(self.settings["auto_refresh"])
         self.auto_toggle.connect("toggled", self._on_toggle, "auto_refresh")
         header.pack_end(self.auto_toggle)
-        self.dark_toggle = Gtk.ToggleButton(icon_name="weather-clear-night-symbolic", tooltip_text="Dark preview")
+        self.dark_toggle = Gtk.ToggleButton(icon_name="weather-clear-night-symbolic", tooltip_text="Dark mode")
         self.dark_toggle.set_active(self.settings["dark_preview"])
         self.dark_toggle.connect("toggled", self._on_toggle, "dark_preview")
         self.dark_toggle.connect("toggled", lambda *_: self.on_run(None))
@@ -889,7 +1263,11 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         header.pack_end(self.decimals_spin)
 
     def _on_toggle(self, btn, key):
-        self.settings[key] = btn.get_active(); save_settings(self.settings)
+        self.settings[key] = btn.get_active()
+        save_settings(self.settings)
+
+        if key == "dark_preview":
+            self._apply_app_theme()
 
     def _on_decimal_places_changed(self, spin):
         self.settings["decimal_places"] = int(spin.get_value())
@@ -1166,6 +1544,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.editor.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
         scroll = Gtk.ScrolledWindow()
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        scroll.set_margin_end(6)
         scroll.set_child(self.editor); return scroll
 
     def _build_preview(self):
