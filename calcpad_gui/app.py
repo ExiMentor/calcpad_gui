@@ -42,6 +42,7 @@ DEFAULT_SETTINGS = {
     "recent": [], "dark_preview": False, "auto_refresh": True,
     "last_dir": str(Path.home()), "schema": 1,
     "decimal_comma": False,
+    "decimal_places": 3,
 }
 
 DEFAULT_SAMPLE = """' CalcpadCE Demo
@@ -150,32 +151,6 @@ def ensure_calcpad_language():
             lm.set_search_path(paths)
         return lm.get_language("calcpad") is not None
     except OSError:
-        # comments / text:
-        # Calcpad text comments usually start with single or double quotes.
-        # Apply this last so it overrides variables, units and operators.
-        text_tag = self._hl_tags["text"]
-        for line_match in re.finditer(r"(?m)^.*$", text):
-            line = line_match.group(0)
-            line_start = line_match.start()
-
-            quote_positions = [
-                pos for pos in (
-                    line.find('"'),
-                    line.find("'"),
-                    line.find("“"),
-                    line.find("‘"),
-                )
-                if pos >= 0
-            ]
-
-            if not quote_positions:
-                continue
-
-            qpos = min(quote_positions)
-            a = self.buffer.get_iter_at_offset(line_start + qpos)
-            b = self.buffer.get_iter_at_offset(line_match.end())
-            self.buffer.apply_tag(text_tag, a, b)
-
         return False
 
 def load_settings():
@@ -256,7 +231,7 @@ def inject_output_scroll_restore(html: str) -> str:
 
     function writeValue(marker, value) {
         let name = String(window.name || "");
-        const escaped = marker.replace(/[.*+?^${}()|[\]\]/g, "\$&");
+        const escaped = marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         name = name.replace(new RegExp(";?" + escaped + "[0-9.]+", "g"), "");
         window.name = name + ";" + marker + String(Math.max(0, value || 0));
     }
