@@ -1718,12 +1718,6 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         return ("<!doctype html><html><head><meta charset='utf-8'>"
                 "<style>" + css + "</style>"
                 "</head><body>" + body + "</body></html>")
-        return ("<!doctype html><html><head><meta charset='utf-8'>"
-                "<style>" + css + "</style>"
-                "</head><body>" + body + "</body></html>")
-        return ("<!doctype html><html><head><meta charset='utf-8'>"
-                "<style>" + '/* Calcpad fractions */.eq{vertical-align:middle}.dvc{display:inline-grid;grid-template-rows:auto auto auto;justify-items:center;align-items:center;vertical-align:middle;margin:0 .2em;line-height:1.15}.dvc>:nth-child(1){grid-row:1;padding:0 .25em}.dvl{grid-row:2;width:100%;height:1px;background:currentColor;min-width:2em;margin:.15em 0}.dvc>:nth-child(3){grid-row:3;padding:0 .25em}var{font-style:italic}.calcpad-output p{margin:.4em 0;line-height:1.8}' + "</style>"
-                f"</head><body>{body}</body></html>")
 
     def _install_shortcuts(self):
         ctl = Gtk.ShortcutController()
@@ -1744,28 +1738,27 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.buffer.insert_at_cursor(text)
         GLib.idle_add(self.editor.grab_focus)
 
-    def _get_text(self):
-        s,e = self.buffer.get_bounds(); return self._normalize(self.buffer.get_text(s,e,True))
+    def _get_buffer_text(self) -> str:
+        start, end = self.buffer.get_bounds()
+        return self.buffer.get_text(start, end, True)
 
+    def _get_text_for_cli(self) -> str:
+        return self._normalize(self._get_buffer_text())
 
-    # ---- Unicode-Normalisierung ---------------------------------
-    _UNICODE_FIX = {
-        "\u00b5": "\u03bc",
-        "\u2126": "\u03a9",
-        "\u2212": "-",
-        "\u00d7": "*",
-        "\u00f7": "/",
-    }
-    _SUPER_DIGITS = str.maketrans(
-        "\u2070\u00b9\u00b2\u00b3\u2074\u2075\u2076\u2077\u2078\u2079",
-        "0123456789")
-    _SUB_DIGITS = str.maketrans(
-        "\u2080\u2081\u2082\u2083\u2084\u2085\u2086\u2087\u2088\u2089",
-        "0123456789")
+    def _get_text(self) -> str:
+        # Backward-compatible alias for CLI usage.
+        return self._get_text_for_cli()
+
 
     def _normalize(self, text):
         import re as _re
-        for bad, good in self._UNICODE_FIX.items():
+        unicode_fix = getattr(
+            self,
+            "_UNICODE_FIX",
+            globals().get("_UNICODE_FIX", globals().get("UNICODE_FIX", {}))
+        )
+
+        for bad, good in unicode_fix.items():
             text = text.replace(bad, good)
         text = _re.sub(
             r"[\u2070\u00b9\u00b2\u00b3\u2074-\u2079]+",
@@ -1860,7 +1853,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
                 f"{GLib.markup_escape_text(self._cli_hint)}</pre>")
         try:
             tmp = tempfile.NamedTemporaryFile("w", suffix=".cpd", delete=False, encoding="utf-8")
-            tmp.write(self._code_with_decimal_places(self._get_text())); tmp.close(); in_path = tmp.name
+            tmp.write(self._code_with_decimal_places(self._get_text_for_cli())); tmp.close(); in_path = tmp.name
         except OSError as e:
             return None, self._wrap_preview(
                 f"<pre style='color:#b00'>Cannot create temp file: {e}</pre>")
@@ -1974,7 +1967,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
     def on_save(self, _btn, _on_done=None):
         if self.current_file:
             try:
-                Path(self.current_file).write_text(self._get_text(), encoding="utf-8")
+                Path(self.current_file).write_text(self._get_buffer_text(), encoding="utf-8")
                 self.buffer.set_modified(False)
                 self.set_status(f"Saved: {self.current_file}")
                 if _on_done: _on_done(True)
@@ -1998,7 +1991,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
     def _save_done(self, dlg, res, on_done):
         try:
             f = dlg.save_finish(res); path = f.get_path()
-            Path(path).write_text(self._get_text(), encoding="utf-8")
+            Path(path).write_text(self._get_buffer_text(), encoding="utf-8")
             self.buffer.set_modified(False); self.current_file = path
             self.settings["last_dir"] = str(Path(path).parent)
             self._add_recent(path); self._refresh_title()
