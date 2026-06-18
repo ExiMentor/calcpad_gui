@@ -875,15 +875,15 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             self._move_autocomplete_selection(-1)
             return True
 
-        if keyval in (
-            Gdk.KEY_Return,
-            Gdk.KEY_KP_Enter,
-            Gdk.KEY_Tab,
-            Gdk.KEY_ISO_Left_Tab,
-            Gdk.KEY_space,
-        ):
+        # Only Tab accepts the current completion.
+        # Enter and Space close the popup and are then handled normally by the editor.
+        if keyval in (Gdk.KEY_Tab, Gdk.KEY_ISO_Left_Tab):
             self._insert_autocomplete_selection()
             return True
+
+        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_space):
+            self._autocomplete_popover.popdown()
+            return False
 
         return False
 
