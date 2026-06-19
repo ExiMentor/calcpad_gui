@@ -2153,13 +2153,16 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
     def on_new(self, _btn=None):
         try:
-            subprocess.Popen(
-                [sys.executable, "-m", "calcpad_gui"],
-                env={**os.environ, "CALCPAD_GUI_EMPTY": "1"}
-            )
+            # Prefer launching through the desktop entry so the panel/taskbar
+            # can associate the window with the correct application icon.
+            subprocess.Popen(["gtk-launch", "calcpad-gui"])
             self.set_status("Opened new window.")
-        except Exception as e:
-            self.set_status(f"Could not open new window: {e}")
+        except Exception:
+            try:
+                subprocess.Popen([sys.executable, "-m", "calcpad_gui"])
+                self.set_status("Opened new window.")
+            except Exception as e:
+                self.set_status(f"Could not open new window: {e}")
 
 
     def _do_new(self):
