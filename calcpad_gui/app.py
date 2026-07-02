@@ -1663,6 +1663,9 @@ class CalcpadWindow(Gtk.ApplicationWindow):
                         btn.connect("clicked",
                                     lambda _b: self.insert_at_cursor(getattr(_b, "_insert_text", "")))
 
+                    if action and action not in ("__clear__", "__bksp__", "__case__"):
+                        self._attach_keyboard_favorite_toggle(btn)
+
                     row_box.append(btn)
 
                 page.append(row_box)
