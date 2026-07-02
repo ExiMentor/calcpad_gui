@@ -1676,6 +1676,30 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         function_rows = [row[10:18] for row in rows]
         greek_rows = [row[18:] for row in rows]
 
+        self._keyboard_favorites_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+        self._keyboard_favorites_page.set_halign(Gtk.Align.CENTER)
+        self._keyboard_favorites_page.set_hexpand(False)
+
+        def refresh_favorites_page():
+            child = self._keyboard_favorites_page.get_first_child()
+            while child is not None:
+                nxt = child.get_next_sibling()
+                self._keyboard_favorites_page.remove(child)
+                child = nxt
+
+            fav_rows = self._get_keyboard_favorite_rows()
+            if fav_rows:
+                self._keyboard_favorites_page.append(build_keyboard_page(fav_rows))
+            else:
+                label = Gtk.Label(label="Right-click a button to add it to Favorites.")
+                label.set_margin_top(12)
+                label.set_margin_bottom(12)
+                self._keyboard_favorites_page.append(label)
+
+        self._refresh_keyboard_favorites_page = refresh_favorites_page
+        refresh_favorites_page()
+
+        stack.add_titled(self._keyboard_favorites_page, "favorites", "Favorites")
         stack.add_titled(build_keyboard_page(basic_rows), "basic", "Basic")
         stack.add_titled(build_keyboard_page(function_rows), "functions", "Functions")
         stack.add_titled(build_keyboard_page(greek_rows, greek_page=True), "greek", "Greek")
@@ -1778,6 +1802,8 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             text = upper if self._greek_upper else lower
             btn.set_label(text)
             btn._insert_text = text
+            btn._favorite_label = text
+            btn._favorite_action = text
 
     def _kbd_clear(self):
         self.buffer.set_text("")
