@@ -1639,6 +1639,8 @@ class CalcpadWindow(Gtk.ApplicationWindow):
                     btn.set_size_request(72, 32)
                     btn.set_size_request(72, 32)
                     btn._insert_text = action
+                    btn._favorite_label = label
+                    btn._favorite_action = action
 
                     if greek_page and label in greek_upper_map:
                         btn._greek_lower = label
