@@ -43,6 +43,7 @@ DEFAULT_SETTINGS = {
     "last_dir": str(Path.home()), "schema": 1,
     "decimal_comma": False,
     "decimal_places": 3,
+    "keyboard_favorites": [],
 }
 
 DEFAULT_SAMPLE = """' CalcpadCE Demo
@@ -304,6 +305,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.set_default_size(1500, 950)
         self.settings = load_settings()
         self.settings.setdefault("decimal_places", 3)
+        self.settings.setdefault("keyboard_favorites", [])
         self.current_file = None
         self._debounce_id = None
         self._run_busy = False
