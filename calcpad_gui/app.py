@@ -1979,7 +1979,12 @@ class CalcpadWindow(Gtk.ApplicationWindow):
     def insert_at_cursor(self, text):
         text = text.replace("µ", "μ")
         self.buffer.insert_at_cursor(text)
-        GLib.idle_add(self.editor.grab_focus)
+
+        def refocus_editor():
+            self.editor.grab_focus()
+            return False
+
+        GLib.idle_add(refocus_editor)
 
     def _get_buffer_text(self) -> str:
         start, end = self.buffer.get_bounds()
