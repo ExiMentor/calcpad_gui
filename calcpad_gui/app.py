@@ -44,6 +44,7 @@ DEFAULT_SETTINGS = {
     "decimal_comma": False,
     "decimal_places": 3,
     "keyboard_favorites": [],
+    "keyboard_visible": True,
 }
 
 DEFAULT_SAMPLE = """' CalcpadCE Demo
@@ -306,6 +307,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.settings = load_settings()
         self.settings.setdefault("decimal_places", 3)
         self.settings.setdefault("keyboard_favorites", [])
+        self.settings.setdefault("keyboard_visible", True)
         self.current_file = None
         self._debounce_id = None
         self._run_busy = False
@@ -1481,12 +1483,25 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.decimals_spin.connect("value-changed", self._on_decimal_places_changed)
         header.pack_end(self.decimals_spin)
 
+        self.keyboard_toggle = Gtk.ToggleButton(icon_name="input-keyboard-symbolic", tooltip_text="Show/hide keyboard")
+        self.keyboard_toggle.set_active(bool(self.settings.get("keyboard_visible", True)))
+        self.keyboard_toggle.connect("toggled", self._on_keyboard_visible_toggled)
+        header.pack_end(self.keyboard_toggle)
+
     def _on_toggle(self, btn, key):
         self.settings[key] = btn.get_active()
         save_settings(self.settings)
 
         if key == "dark_preview":
             self._apply_app_theme()
+
+    def _on_keyboard_visible_toggled(self, btn):
+        visible = bool(btn.get_active())
+        self.settings["keyboard_visible"] = visible
+        save_settings(self.settings)
+        revealer = getattr(self, "_keyboard_revealer", None)
+        if revealer is not None:
+            revealer.set_reveal_child(visible)
 
     def _on_decimal_places_changed(self, spin):
         self.settings["decimal_places"] = int(spin.get_value())
@@ -1529,7 +1544,13 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         inner.set_end_child(self._build_preview())
         root.append(self._build_search_bar())
         root.append(inner)
-        root.append(self._build_keyboard())
+
+        self._keyboard_revealer = Gtk.Revealer()
+        self._keyboard_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_UP)
+        self._keyboard_revealer.set_reveal_child(bool(self.settings.get("keyboard_visible", True)))
+        self._keyboard_revealer.set_child(self._build_keyboard())
+        root.append(self._keyboard_revealer)
+
         self.status = Gtk.Label(xalign=0)
         self.status.add_css_class("status")
         root.append(self.status)
