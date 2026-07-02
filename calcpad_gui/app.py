@@ -1680,6 +1680,88 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         box.append(stack)
         return box
 
+    def _favorite_key(self, label, action):
+        return f"{label}\t{action}"
+
+    def _get_keyboard_favorites(self):
+        favs = self.settings.setdefault("keyboard_favorites", [])
+        clean = []
+        seen = set()
+
+        for item in favs:
+            if not isinstance(item, dict):
+                continue
+
+            label = str(item.get("label", ""))
+            action = str(item.get("action", ""))
+
+            if not label or not action:
+                continue
+
+            key = self._favorite_key(label, action)
+            if key in seen:
+                continue
+
+            seen.add(key)
+            clean.append({"label": label, "action": action})
+
+        if clean != favs:
+            self.settings["keyboard_favorites"] = clean
+            save_settings(self.settings)
+
+        return clean
+
+    def _get_keyboard_favorite_rows(self):
+        favs = self._get_keyboard_favorites()
+        buttons = [(item["label"], item["action"]) for item in favs]
+        return [buttons[i:i + 10] for i in range(0, len(buttons), 10)]
+
+    def _attach_keyboard_favorite_toggle(self, btn):
+        try:
+            click = Gtk.GestureClick.new()
+            click.set_button(3)
+            click.connect(
+                "pressed",
+                lambda _g, _n, _x, _y, b=btn: self._toggle_keyboard_favorite(b)
+            )
+            btn.add_controller(click)
+
+            tip = btn.get_tooltip_text() or ""
+            extra = "Right-click: add/remove favorite"
+            btn.set_tooltip_text((tip + "\n" + extra).strip())
+        except Exception:
+            pass
+
+    def _toggle_keyboard_favorite(self, btn):
+        label = getattr(btn, "_favorite_label", None) or btn.get_label()
+        action = getattr(btn, "_favorite_action", None) or getattr(btn, "_insert_text", "")
+
+        if not label or not action:
+            return
+
+        favs = self._get_keyboard_favorites()
+        key = self._favorite_key(label, action)
+
+        existing = None
+        for i, item in enumerate(favs):
+            if self._favorite_key(item["label"], item["action"]) == key:
+                existing = i
+                break
+
+        if existing is None:
+            favs.append({"label": label, "action": action})
+            self.set_status(f"Favorite added: {label}")
+        else:
+            del favs[existing]
+            self.set_status(f"Favorite removed: {label}")
+
+        self.settings["keyboard_favorites"] = favs
+        save_settings(self.settings)
+
+        refresh = getattr(self, "_refresh_keyboard_favorites_page", None)
+        if refresh:
+            refresh()
+
     def _kbd_toggle_greek_case(self):
         self._greek_upper = not getattr(self, "_greek_upper", False)
 
