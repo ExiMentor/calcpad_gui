@@ -31,6 +31,10 @@ if _have < _MIN_GTK:
 
 APP_ID    = "org.community.calcpadce.linuxgui"
 APP_TITLE = "CalcpadCE"
+
+_SUPER_DIGITS = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
+_SUB_DIGITS = str.maketrans("₀₁₂₃₄₅₆₇₈₉", "0123456789")
+
 CFG_DIR   = Path(GLib.get_user_config_dir()) / "calcpad-gui"
 CFG_FILE  = CFG_DIR / "settings.json"
 LANG_DIR  = Path(GLib.get_user_data_dir()) / "gtksourceview-5" / "language-specs"
@@ -2146,11 +2150,11 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             text = text.replace(bad, good)
         text = _re.sub(
             r"[\u2070\u00b9\u00b2\u00b3\u2074-\u2079]+",
-            lambda m: "^" + m.group(0).translate(self._SUPER_DIGITS),
+            lambda m: "^" + m.group(0).translate(_SUPER_DIGITS),
             text)
         text = _re.sub(
             r"[\u2080-\u2089]+",
-            lambda m: "_" + m.group(0).translate(self._SUB_DIGITS),
+            lambda m: "_" + m.group(0).translate(_SUB_DIGITS),
             text)
         return text
 
