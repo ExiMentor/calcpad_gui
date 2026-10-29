@@ -810,13 +810,16 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self._autocomplete_suggestions = []
         self._autocomplete_index = 0
         self._autocomplete_update_id = 0
-        self._autocomplete_suppress_once = False
+        self._autocomplete_inserting = False
 
         self._autocomplete_popover = Gtk.Popover()
         self._autocomplete_popover.set_parent(self.editor)
-        self._autocomplete_popover.set_autohide(True)
+        # Keep keyboard focus in the editor so Tab accepts the selection.
+        self._autocomplete_popover.set_autohide(False)
+        self._autocomplete_popover.set_can_focus(False)
 
         self._autocomplete_list = Gtk.ListBox()
+        self._autocomplete_list.set_can_focus(False)
         self._autocomplete_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self._autocomplete_list.connect("row-activated", self._on_autocomplete_row_activated)
         self._autocomplete_popover.set_child(self._autocomplete_list)
@@ -830,18 +833,19 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.editor.add_controller(key)
 
         self.buffer.connect("changed", self._schedule_autocomplete_update)
+        self.editor.connect(
+            "notify::has-focus",
+            lambda editor, _pspec: (
+                self._hide_autocomplete_popover() if not editor.has_focus() else None
+            ),
+        )
 
     def _schedule_autocomplete_update(self, *_args):
-        if getattr(self, "_autocomplete_suppress_once", False):
-            self._autocomplete_suppress_once = False
+        if getattr(self, "_autocomplete_inserting", False):
             return
-
-        if getattr(self, "_autocomplete_update_id", 0):
-            try:
-                GLib.source_remove(self._autocomplete_update_id)
-            except Exception:
-                pass
-
+        if self._autocomplete_update_id:
+            GLib.source_remove(self._autocomplete_update_id)
+            self._autocomplete_update_id = 0
         self._autocomplete_update_id = GLib.timeout_add(120, self._update_autocomplete)
 
     def _on_autocomplete_key_pressed(self, controller, keyval, keycode, state):
@@ -874,6 +878,9 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         return False
 
     def _hide_autocomplete_popover(self):
+        if self._autocomplete_update_id:
+            GLib.source_remove(self._autocomplete_update_id)
+            self._autocomplete_update_id = 0
         self._autocomplete_prefix = ""
         self._autocomplete_suggestions = []
         self._autocomplete_index = 0
@@ -980,6 +987,11 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             seen.add(key)
             unique.append(item)
 
+        # An existing complete name must not reopen completion just because
+        # a longer name shares its prefix (I_spark / I_spark_permitted).
+        if any(item.lower() == prefix_l for item in unique):
+            return []
+
         starts = [item for item in unique if item.lower().startswith(prefix_l)]
         contains = [
             item for item in unique
@@ -1026,6 +1038,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             label.set_margin_bottom(4)
 
             row = Gtk.ListBoxRow()
+            row.set_can_focus(False)
             row.set_child(label)
             self._autocomplete_list.append(row)
 
@@ -1052,26 +1065,29 @@ class CalcpadWindow(Gtk.ApplicationWindow):
     def _insert_autocomplete_selection(self):
         if not self._autocomplete_suggestions:
             return
-
         suggestion = self._autocomplete_suggestions[self._autocomplete_index]
         prefix = self._autocomplete_prefix
-
+        # Reject a stale popup after the cursor or text has changed.
+        if not prefix or self._get_autocomplete_prefix() != prefix:
+            self._hide_autocomplete_popover()
+            return
         cursor = self.buffer.get_iter_at_mark(self.buffer.get_insert())
         start = cursor.copy()
-
-        try:
-            start.backward_chars(len(prefix))
-        except Exception:
+        if not start.backward_chars(len(prefix)):
             return
-
-        self._autocomplete_suppress_once = True
-
-        self.buffer.begin_user_action()
-        self.buffer.delete(start, cursor)
-        self.buffer.insert(start, suggestion)
-        self.buffer.end_user_action()
-
         self._hide_autocomplete_popover()
+        # Both delete() and insert() emit changed; suppress the whole transaction.
+        self._autocomplete_inserting = True
+        try:
+            self.buffer.begin_user_action()
+            try:
+                self.buffer.delete(start, cursor)
+                self.buffer.insert(start, suggestion)
+            finally:
+                self.buffer.end_user_action()
+        finally:
+            self._autocomplete_inserting = False
+        self.editor.grab_focus()
 
     def _apply_app_theme(self):
         dark = bool(self.settings.get("dark_preview", False))
@@ -1434,13 +1450,23 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         menu = Gio.Menu()
         menu.append("Export HTML…","win.export_html")
         menu.append("Export PDF…","win.export_pdf")
-        menu.append("Export Word (DOCX)…","win.export_docx")
+        menu.append("Quick export Word + open", "win.export_docx")
+        menu.append("Export Word as…", "win.export_docx_as")
         export_btn.set_menu_model(menu)
         header.pack_start(export_btn)
         for name,fmt in [("export_html","html"),("export_pdf","pdf"),("export_docx","docx")]:
             a = Gio.SimpleAction.new(name, None)
-            a.connect("activate", lambda _a,_p,f=fmt: self._export(f))
+            a.connect("activate", lambda _a,_p,f=fmt: self._quick_export_docx() if f == "docx" else self._export(f))
             self.add_action(a)
+
+        word_as = Gio.SimpleAction.new("export_docx_as", None)
+        word_as.connect("activate", lambda *_: self._export("docx"))
+        self.add_action(word_as)
+        self.get_application().set_accels_for_action("win.export_docx", ["<Primary><Shift>e"])
+        quick_word = Gtk.Button(label="Word Quick Export",
+                                tooltip_text="Quick export Word + open (Ctrl+Shift+E)")
+        quick_word.set_action_name("win.export_docx")
+        header.pack_start(quick_word)
 
         self.auto_toggle = Gtk.ToggleButton(icon_name="view-refresh-symbolic", tooltip_text="Auto-refresh")
         self.auto_toggle.set_active(self.settings["auto_refresh"])
@@ -2203,14 +2229,14 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         places = max(0, min(15, places))
         return f"#round {places}\n" + code
 
-    def _run_cli(self, out_format, body_only):
+    def _run_cli(self, out_format, body_only, source_text=None):
         if not self._cli_cmd:
             return None, self._wrap_preview(
                 f"<pre style='color:#b00;font-family:monospace;padding:1em'>"
                 f"{GLib.markup_escape_text(self._cli_hint)}</pre>")
         try:
             tmp = tempfile.NamedTemporaryFile("w", suffix=".cpd", delete=False, encoding="utf-8")
-            tmp.write(self._code_with_decimal_places(self._get_text_for_cli())); tmp.close(); in_path = tmp.name
+            tmp.write(source_text if source_text is not None else self._code_with_decimal_places(self._get_text_for_cli())); tmp.close(); in_path = tmp.name
         except OSError as e:
             return None, self._wrap_preview(
                 f"<pre style='color:#b00'>Cannot create temp file: {e}</pre>")
@@ -2365,6 +2391,101 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         if path in rec: rec.remove(path)
         rec.insert(0, path); self.settings["recent"] = rec[:10]
         save_settings(self.settings); self._refresh_recent_menu()
+
+    def _reserve_quick_docx(self):
+        documents = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOCUMENTS)
+        folder = Path(documents or str(Path.home() / "Documents")) / "Calcpad Exports"
+        folder.mkdir(parents=True, exist_ok=True)
+        highest = 0
+        for entry in folder.iterdir():
+            match = re.fullmatch(r"worksheet_(\d+)\.docx", entry.name)
+            if match:
+                highest = max(highest, int(match.group(1)))
+        index = highest + 1
+        while True:
+            target = folder / f"worksheet_{index}.docx"
+            try:
+                # Exclusive reservation prevents overwrites across windows.
+                with target.open("xb"):
+                    pass
+                return target
+            except FileExistsError:
+                index += 1
+
+    def _open_quick_docx(self, target):
+        # Prefer native ONLYOFFICE; otherwise respect the desktop association
+        # (also supports installations registered through Flatpak or Snap).
+        for name in ("onlyoffice-desktopeditors", "desktopeditors"):
+            executable = shutil.which(name)
+            if executable:
+                subprocess.Popen([executable, str(target)])
+                return
+        Gio.AppInfo.launch_default_for_uri(target.resolve().as_uri(), None)
+
+    def _quick_export_docx(self):
+        if getattr(self, "_quick_docx_busy", False):
+            self.set_status("Word export is already running.")
+            return
+        try:
+            # Read GTK state on the main thread, before starting the worker.
+            source = self._code_with_decimal_places(self._get_text_for_cli())
+            decimal_comma = self.settings.get("decimal_comma", False)
+            target = self._reserve_quick_docx()
+        except Exception as exc:
+            self.set_status(f"Cannot prepare Word export: {exc}")
+            return
+        self._quick_docx_busy = True
+        self.set_status(f"Exporting -> {target.name}...")
+
+        def worker():
+            out = None
+            error = None
+            success = False
+            try:
+                out, error = self._run_cli("docx", body_only=False, source_text=source)
+                if not error:
+                    if not out or not Path(out).is_file() or Path(out).stat().st_size == 0:
+                        raise OSError("Calcpad did not produce a DOCX file.")
+                    if decimal_comma:
+                        self._apply_decimal_comma_docx(str(out))
+                    shutil.move(str(out), str(target))
+                    success = True
+            except Exception as exc:
+                error = f"Word export failed: {exc}"
+            finally:
+                if not success:
+                    try:
+                        target.unlink()
+                    except OSError:
+                        pass
+                if out:
+                    try:
+                        Path(out).unlink(missing_ok=True)
+                    except OSError:
+                        pass
+
+            def finish():
+                self._quick_docx_busy = False
+                if not success:
+                    self.set_status(f"Word export failed: {error}")
+                    return False
+                try:
+                    self._open_quick_docx(target)
+                    self.set_status(f"Exported and opening -> {target}")
+                except Exception as exc:
+                    self.set_status(f"Saved -> {target}; could not open: {exc}")
+                return False
+            GLib.idle_add(finish)
+
+        try:
+            threading.Thread(target=worker, daemon=True).start()
+        except Exception as exc:
+            self._quick_docx_busy = False
+            try:
+                target.unlink()
+            except OSError:
+                pass
+            self.set_status(f"Could not start Word export: {exc}")
 
     def _export(self, fmt):
         dlg = Gtk.FileDialog(); dlg.set_title(f"Export as {fmt.upper()}")
