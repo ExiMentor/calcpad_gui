@@ -429,7 +429,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             if not in_comment(m.start()):
                 apply_range("unit", m.start(), m.end())
 
-        for m in re.finditer(r"[+\-*/^=<>≤≥≠%∑∏√·×]", text):
+        for m in re.finditer(r"\|\||[+\-*/^=<>≤≥≠%∑∏√·×]", text):
             if not in_comment(m.start()):
                 apply_range("op", m.start(), m.end())
 
@@ -2134,6 +2134,108 @@ class CalcpadWindow(Gtk.ApplicationWindow):
     def _get_text(self) -> str:
         return self._get_text_for_cli()
 
+    @classmethod
+    def _parallel_resistance_expression(cls, expression):
+        """Expand a || b [|| c] to the reciprocal-sum expression Calcpad understands."""
+        expression = expression.strip()
+        if "||" not in expression:
+            return expression
+
+        # Split only at the current parenthesis level. Nested parallel groups
+        # are handled recursively below.
+        parts = []
+        start = 0
+        depth = 0
+        i = 0
+        while i < len(expression):
+            ch = expression[i]
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth = max(0, depth - 1)
+            elif ch == "|" and i + 1 < len(expression) and expression[i + 1] == "|" and depth == 0:
+                parts.append(expression[start:i].strip())
+                start = i + 2
+                i += 1
+            i += 1
+
+        if parts:
+            parts.append(expression[start:].strip())
+            if any(not part for part in parts):
+                return expression
+            terms = [cls._parallel_resistance_expression(part) for part in parts]
+            reciprocal_sum = " + ".join(f"1 / ({term})" for term in terms)
+            return f"1 / ({reciprocal_sum})"
+
+        # No top-level operator: recurse into balanced parentheses so that
+        # expressions such as 2 * (R1 || R2) also work.
+        out = []
+        i = 0
+        while i < len(expression):
+            if expression[i] != "(":
+                out.append(expression[i])
+                i += 1
+                continue
+            depth = 1
+            end = i + 1
+            while end < len(expression) and depth:
+                if expression[end] == "(":
+                    depth += 1
+                elif expression[end] == ")":
+                    depth -= 1
+                end += 1
+            if depth:
+                return expression
+            inner = expression[i + 1:end - 1]
+            out.append("(" + cls._parallel_resistance_expression(inner) + ")")
+            i = end
+        return "".join(out)
+
+    @classmethod
+    def _expand_parallel_resistors(cls, text):
+        """Expand the custom resistor operator || without changing editor text."""
+        result = []
+        for line in text.splitlines(keepends=True):
+            ending = "\n" if line.endswith("\n") else ""
+            raw = line[:-1] if ending else line
+            stripped = raw.lstrip()
+            if "||" not in raw or stripped.startswith(("'", '"', "#")):
+                result.append(line)
+                continue
+
+            # Keep inline comments untouched. Calcpad comments start with '.
+            comment_at = raw.find("'")
+            code = raw if comment_at < 0 else raw[:comment_at]
+            comment = "" if comment_at < 0 else raw[comment_at:]
+
+            # For assignments, transform only the right-hand expression.
+            eq_at = -1
+            depth = 0
+            for i, ch in enumerate(code):
+                if ch == "(":
+                    depth += 1
+                elif ch == ")":
+                    depth = max(0, depth - 1)
+                elif ch == "=" and depth == 0:
+                    previous = code[i - 1] if i else ""
+                    following = code[i + 1] if i + 1 < len(code) else ""
+                    if previous not in "<>!=" and following != "=":
+                        eq_at = i
+                        break
+
+            if eq_at >= 0:
+                left = code[:eq_at + 1]
+                right = code[eq_at + 1:]
+                leading = right[:len(right) - len(right.lstrip())]
+                expanded = cls._parallel_resistance_expression(right)
+                code = left + leading + expanded
+            else:
+                leading = code[:len(code) - len(code.lstrip())]
+                code = leading + cls._parallel_resistance_expression(code)
+
+            result.append(code + comment + ending)
+        return "".join(result)
+
     def _normalize(self, text):
         import re as _re
         unicode_fix = getattr(
@@ -2157,6 +2259,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             r"[\u2080-\u2089]+",
             lambda m: "_" + m.group(0).translate(_SUB_DIGITS),
             text)
+        text = self._expand_parallel_resistors(text)
         return text
 
     def _on_modified_changed(self, _buf): self._refresh_title()
