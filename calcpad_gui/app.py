@@ -2093,7 +2093,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
 
     def _wrap_preview(self, body):
         body = self._format_preview_numbers(body)
-        css = "body{font-family:'Segoe UI','Liberation Sans',sans-serif;padding:1em;line-height:1.6;color:#111}.calcpad-output var{font-style:italic;font-family:'Cambria Math','STIX Two Math',serif}.calcpad-output i{font-style:italic;color:#0a7}.calcpad-output b{font-weight:600}.calcpad-output table{border-collapse:collapse;margin:0.5em 0}.calcpad-output td,.calcpad-output th{padding:0.35em 0.5em;border:1px solid #ddd;vertical-align:top}.calcpad-output .dvl{border-bottom:1px solid #ddd}.calcpad-output .o1{border-top:1px solid #bbb}.calcpad-output pre{white-space:pre-wrap}.calcpad-output code{font-family:monospace}.calcpad-output ul,.calcpad-output ol{padding-left:1.4em}.calcpad-output h1,.calcpad-output h2,.calcpad-output h3,.calcpad-output h4,.calcpad-output h5,.calcpad-output h6{margin:0.6em 0 0.35em 0;font-weight:600}.calcpad-output p{margin:0.35em 0}.calcpad-output hr{border:none;border-top:1px solid #ddd;margin:0.8em 0}.calcpad-output .cp-line-flash{outline:2px solid rgba(0,102,221,.35);outline-offset:2px}"
+        css = "body{font-family:'Segoe UI','Liberation Sans',sans-serif;padding:1em;line-height:1.6;color:#111}.calcpad-output var{font-style:italic;font-family:'Cambria Math','STIX Two Math',serif;color:#0066DD}.calcpad-output i{font-style:italic;color:#119911}.calcpad-output b{font-weight:600}.calcpad-output table{border-collapse:collapse;margin:0.5em 0}.calcpad-output td,.calcpad-output th{padding:0.35em 0.5em;border:1px solid #ddd;vertical-align:top}.eq{display:inline-block;vertical-align:middle}.dvc,.dvr,.dvs{display:inline-block;vertical-align:middle;white-space:nowrap}.dvc{padding-left:2pt;padding-right:2pt;text-align:center;line-height:110%}.dvr{text-align:center;line-height:110%;position:relative;top:-3pt}.dvs{text-align:left;line-height:110%}.dvl{display:block;border-bottom:solid 1pt currentColor;margin-top:1pt;margin-bottom:1pt}.dvc.down{position:relative;top:.5em}.dvc.up{position:relative;bottom:.6em}.low{font-size:70%;display:inline-block;position:relative;top:1.2em}sub,sup{font-size:70%}.o1{display:inline-block;border-top:1pt solid currentColor;padding-top:1pt;margin-left:-1pt}.r1{display:inline-block;font-size:140%;line-height:60%;vertical-align:-.05em;margin-right:-2pt}.r1::before{content:'\221a'}.nary{font-size:240%;font-family:'Cambria Math','STIX Two Math',serif;line-height:70%;display:inline-block;margin:0 2pt;vertical-align:middle;color:#C080F0}.calcpad-output pre{white-space:pre-wrap}.calcpad-output code{font-family:monospace}.calcpad-output ul,.calcpad-output ol{padding-left:1.4em}.calcpad-output h1,.calcpad-output h2,.calcpad-output h3,.calcpad-output h4,.calcpad-output h5,.calcpad-output h6{margin:0.6em 0 0.35em 0;font-weight:600}.calcpad-output p{margin:0.35em 0}.calcpad-output hr{border:none;border-top:1px solid #ddd;margin:0.8em 0}.calcpad-output .cp-line-flash{outline:2px solid rgba(0,102,221,.35);outline-offset:2px}"
         if self.settings["dark_preview"]:
             css = css + 'body{background:#1e1e1e;color:#e0e0e0}.calcpad-output var{color:#6cb6ff}.calcpad-output i{color:#7ed87e}.dvl{border-bottom-color:#bbb}.o1{border-top-color:#bbb}table,td,th{border-color:#555}.calcpad-output .cp-line-flash{outline-color:rgba(108,182,255,.45)}'
         return ("<!doctype html><html><head><meta charset='utf-8'>"
@@ -2197,25 +2197,65 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             parts[i] = self._dots_to_commas(parts[i])
         return "".join(parts)
 
+    @staticmethod
+    def _process_ooxml_formula_runs(data, use_comma):
+        """Preserve OMML; set decimal separator and color unit formula runs green."""
+        import re as _re
+        run_re = _re.compile(rb"<m:r(?:\s[^>]*)?>.*?</m:r>", _re.DOTALL)
+        text_re = _re.compile(rb"<m:t(?:\s[^>]*)?>(.*?)</m:t>", _re.DOTALL)
+        decimal_re = _re.compile(rb"(?<=\d)[.,](?=\d)")
+        decimal = b"," if use_comma else b"."
+        unit_re = _re.compile(
+            rb"(?:mm|cm|km|m|ms|s|min|h|mV|kV|V|uV|\xc2\xb5V|\xce\xbcV|"
+            rb"mA|A|uA|\xc2\xb5A|\xce\xbcA|mW|kW|W|"
+            rb"mF|nF|pF|F|uF|\xc2\xb5F|\xce\xbcF|"
+            rb"mH|nH|H|uH|\xc2\xb5H|\xce\xbcH|"
+            rb"Hz|kHz|MHz|Pa|kPa|MPa|\xce\xa9|k\xce\xa9|M\xce\xa9|%|\xc2\xb0C|K)"
+        )
+        def process_run(match):
+            run=match.group(0)
+            tm=text_re.search(run)
+            if not tm:
+                return run
+            old_text=tm.group(1)
+            new_text=decimal_re.sub(decimal,old_text)
+            if new_text != old_text:
+                run=run[:tm.start(1)]+new_text+run[tm.end(1):]
+            if not unit_re.fullmatch(new_text.strip()):
+                return run
+            color=b'<w:color w:val="119911" />'
+            wrpr=_re.search(rb"<w:rPr>(.*?)</w:rPr>",run,_re.DOTALL)
+            if wrpr:
+                content=wrpr.group(1)
+                if b'<w:color ' in content:
+                    content=_re.sub(rb'<w:color\s+[^>]*/>',color,content,count=1)
+                else:
+                    content=color+content
+                return run[:wrpr.start(1)]+content+run[wrpr.end(1):]
+            mt_pos=run.find(b'<m:t')
+            if mt_pos >= 0:
+                return run[:mt_pos]+b'<w:rPr>'+color+b'</w:rPr>'+run[mt_pos:]
+            return run
+        return run_re.sub(process_run,data)
+
+    def _postprocess_docx(self, docx_path, use_comma):
+        import zipfile
+        tmp=docx_path+'.tmp'
+        try:
+            with zipfile.ZipFile(docx_path,'r') as zin:
+                with zipfile.ZipFile(tmp,'w',zipfile.ZIP_DEFLATED) as zout:
+                    for item in zin.infolist():
+                        data=zin.read(item.filename)
+                        if item.filename.startswith('word/') and item.filename.endswith('.xml'):
+                            data=self._process_ooxml_formula_runs(data,use_comma)
+                        zout.writestr(item,data)
+            shutil.move(tmp,docx_path)
+        finally:
+            try: Path(tmp).unlink(missing_ok=True)
+            except OSError: pass
+
     def _apply_decimal_comma_docx(self, docx_path):
-        import zipfile, shutil
-        tmp = docx_path + ".tmp"
-        with zipfile.ZipFile(docx_path, "r") as zin:
-            with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zout:
-                for item in zin.infolist():
-                    data = zin.read(item.filename)
-                    if item.filename.endswith(".xml") and (
-                            "document" in item.filename
-                            or "header" in item.filename
-                            or "footer" in item.filename):
-                        try:
-                            text = data.decode("utf-8")
-                            text = self._apply_decimal_comma_html(text)
-                            data = text.encode("utf-8")
-                        except UnicodeDecodeError:
-                            pass
-                    zout.writestr(item, data)
-        shutil.move(tmp, docx_path)
+        self._postprocess_docx(docx_path,True)
 
     def on_text_changed(self, *_):
         if not self.auto_toggle.get_active(): return
@@ -2451,8 +2491,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
                 if not error:
                     if not out or not Path(out).is_file() or Path(out).stat().st_size == 0:
                         raise OSError("Calcpad did not produce a DOCX file.")
-                    if decimal_comma:
-                        self._apply_decimal_comma_docx(str(out))
+                    self._postprocess_docx(str(out), bool(decimal_comma))
                     shutil.move(str(out), str(target))
                     success = True
             except Exception as exc:
@@ -2513,16 +2552,14 @@ class CalcpadWindow(Gtk.ApplicationWindow):
                 else:
                     try:
                         shutil.move(out, target)
-                        if self.settings.get("decimal_comma", False):
-                            tp = Path(target)
-                            ext = tp.suffix.lower()
-                            if ext in (".html", ".htm"):
-                                txt = tp.read_text(encoding="utf-8")
-                                tp.write_text(
-                                    self._apply_decimal_comma_html(txt),
-                                    encoding="utf-8")
-                            elif ext == ".docx":
-                                self._apply_decimal_comma_docx(str(tp))
+                        tp = Path(target)
+                        ext = tp.suffix.lower()
+                        decimal_comma = bool(self.settings.get("decimal_comma", False))
+                        if ext == ".docx":
+                            self._postprocess_docx(str(tp), decimal_comma)
+                        elif decimal_comma and ext in (".html", ".htm"):
+                            txt = tp.read_text(encoding="utf-8")
+                            tp.write_text(self._apply_decimal_comma_html(txt), encoding="utf-8")
                         self.settings["last_dir"] = str(Path(target).parent)
                         save_settings(self.settings)
                         self.set_status(f"Exported -> {target}")
