@@ -1,0 +1,1 @@
+"""Calcpad GUI resources components."""

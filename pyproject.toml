@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calcpad-gui"
+version = "4.0.0"
+description = "Modular GTK 4 / GtkSourceView 5 / WebKitGTK 6 desktop shell for CalcpadCE"
+readme = "README.md"
+requires-python = ">=3.10"
+# GI and its typelibs are distribution packages, not pip dependencies.
+dependencies = []
+
+[project.scripts]
+calcpad-gui = "calcpad_gui.application:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["calcpad_gui*"]
+
+[tool.setuptools.package-data]
+"calcpad_gui.resources" = ["*.lang", "*.css", "*.html"]
+"calcpad_gui" = ["assets/*.svg", "assets/*.png"]

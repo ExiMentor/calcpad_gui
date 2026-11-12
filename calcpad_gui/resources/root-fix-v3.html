@@ -1,0 +1,250 @@
+
+<script id="calcpad-root-fix-v3">
+(function () {
+    "use strict";
+    if (window.__calcpadRootFixV3) {
+        window.__calcpadRootFixV3.refresh();
+        return;
+    }
+    const ns = "http://www.w3.org/2000/svg";
+    const state = {roots: [], queued: false};
+    const whitespace = node => node.nodeType === 3 && !node.textContent.trim();
+    const degree = node => node.nodeType === 1 && node.tagName === "SUP";
+    const signText = node => node.nodeType === 3 && node.textContent.trim() === "√";
+    const signOnly = node => Array.from(node.childNodes).every(part =>
+        whitespace(part) || signText(part) || degree(part));
+    const numericSpan = (node, prefix) => node && node.nodeType === 1 &&
+        node.tagName === "SPAN" && Array.from(node.classList).some(name =>
+            new RegExp("^" + prefix + "[0-9]+$").test(name));
+    const claimed = node => node && ["cp-preview-root", "cp-preview-radicand",
+        "cp-preview-root-marker"].some(name => node.classList.contains(name));
+    const excluded = node => {
+        for (let el = node; el; el = el.parentElement) {
+            if (/^(PRE|CODE|SCRIPT|STYLE|TEXTAREA|SVG|MATH)$/.test(el.tagName) ||
+                    el.isContentEditable) return true;
+        }
+        return false;
+    };
+    const content = nodes => nodes.some(node => !whitespace(node) &&
+        !signText(node) && !(node.nodeType === 1 && node.classList.contains("cp-preview-root-marker")));
+    const setAttr = (node, name, value) => {
+        value = String(value);
+        if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+    };
+    const px = value => Math.round(value * 1000) / 1000;
+    const setPx = (node, name, value) => {
+        const text = px(value) + "px";
+        if (node.style[name] !== text) node.style[name] = text;
+    };
+
+    function hideGlyph(node) {
+        const hidden = document.createElement("span");
+        hidden.classList.add("cp-preview-root-marker");
+        node.parentNode.insertBefore(hidden, node);
+        hidden.appendChild(node);
+    }
+    function indices(marker, root) {
+        Array.from(marker.childNodes).forEach(node => {
+            // Unwrap an empty sign marker's index in place, including its
+            // whitespace, before hiding the marker. Keep source text order.
+            if (marker !== root) root.insertBefore(node, marker);
+            if (degree(node)) node.classList.add("cp-preview-root-index");
+            else if (signText(node)) hideGlyph(node);
+        });
+    }
+
+    function install(marker) {
+        if (!numericSpan(marker, "r") || claimed(marker) || excluded(marker)) return;
+        let root = marker;
+        let radicand;
+        const nodes = Array.from(marker.childNodes);
+        const bars = Array.from(marker.children).filter(node =>
+            numericSpan(node, "o") && !claimed(node));
+        if (bars.length === 1 && nodes.every(node => node === bars[0] ||
+                whitespace(node) || signText(node) || degree(node)) &&
+                content(Array.from(bars[0].childNodes))) {
+            // rN > oN (with an optional explicit nth-root index).
+            radicand = bars[0];
+            indices(marker, root);
+        } else if (signOnly(marker) && numericSpan(marker.nextElementSibling, "o") &&
+                !claimed(marker.nextElementSibling)) {
+            // Empty rN, whitespace, oN siblings.
+            radicand = marker.nextElementSibling;
+            if (!content(Array.from(radicand.childNodes))) return;
+            const parts = [marker];
+            for (let node = marker.nextSibling; node !== radicand; node = node.nextSibling) {
+                if (!node || !whitespace(node)) return;
+                parts.push(node);
+            }
+            root = document.createElement("span");
+            marker.parentNode.insertBefore(root, marker);
+            parts.concat(radicand).forEach(node => root.appendChild(node));
+            indices(marker, root);
+            marker.classList.add("cp-preview-root-marker");
+        } else if (numericSpan(marker.parentElement, "o") && !claimed(marker.parentElement)) {
+            // Inverse layouts: oN > rN(content), or oN > empty rN + content.
+            root = marker.parentElement;
+            const siblings = Array.from(root.childNodes);
+            if (!signOnly(marker)) {
+                if (!siblings.every(node => node === marker || whitespace(node) || degree(node))) return;
+                radicand = marker;
+            } else {
+                const at = siblings.indexOf(marker);
+                if (!siblings.slice(0, at).every(node => whitespace(node) || degree(node)) ||
+                        !content(siblings.slice(at + 1))) return;
+                radicand = document.createElement("span");
+                root.appendChild(radicand);
+                siblings.slice(at + 1).forEach(node => radicand.appendChild(node));
+                indices(marker, root);
+                marker.classList.add("cp-preview-root-marker");
+            }
+            Array.from(root.children).filter(degree).forEach(node =>
+                node.classList.add("cp-preview-root-index"));
+        } else {
+            return;
+        }
+        root.classList.add("cp-preview-root");
+        radicand.classList.add("cp-preview-radicand");
+        Array.from(marker.childNodes).filter(signText).forEach(hideGlyph);
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("class", "cp-preview-root-sign");
+        svg.setAttribute("preserveAspectRatio", "none");
+        svg.setAttribute("aria-hidden", "true");
+        svg.setAttribute("focusable", "false");
+        const path = document.createElementNS(ns, "path");
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "currentColor");
+        path.setAttribute("stroke-linejoin", "round");
+        path.setAttribute("stroke-linecap", "round");
+        svg.appendChild(path);
+        root.insertBefore(svg, root.firstChild);
+        state.roots.push({root, radicand, svg, path});
+        if (state.observer) state.observer.observe(radicand);
+    }
+
+    const number = value => parseFloat(value) || 0;
+    function metrics(root) {
+        const style = window.getComputedStyle(root);
+        const box = root.getBoundingClientRect();
+        const left = number(style.paddingLeft), right = number(style.paddingRight);
+        const top = number(style.paddingTop), bottom = number(style.paddingBottom);
+        // getBoundingClientRect includes CSS transforms; convert back to local
+        // SVG/CSS units. Page zoom then scales the whole expression uniformly.
+        const width = number(style.width) + left + right;
+        const height = number(style.height) + top + bottom;
+        return {style, box, left, right, top, bottom,
+            sx: width > 0 ? box.width / width : 1,
+            sy: height > 0 ? box.height / height : 1};
+    }
+
+    function bounds(radicand, m) {
+        let result = null;
+        const include = rect => {
+            if (!rect || rect.width <= 0 || rect.height <= 0 ||
+                    ![rect.left, rect.top, rect.right, rect.bottom].every(Number.isFinite)) return;
+            const b = {left: (rect.left - m.box.left) / m.sx,
+                right: (rect.right - m.box.left) / m.sx,
+                top: (rect.top - m.box.top) / m.sy,
+                bottom: (rect.bottom - m.box.top) / m.sy};
+            if (!result) result = b;
+            else {
+                result.left = Math.min(result.left, b.left);
+                result.right = Math.max(result.right, b.right);
+                result.top = Math.min(result.top, b.top);
+                result.bottom = Math.max(result.bottom, b.bottom);
+            }
+        };
+        include(radicand.getBoundingClientRect());
+        // A dvr fraction is shifted by top:-3pt; superscripts and nested math
+        // can also overflow their line boxes. Include descendants AND text rects.
+        Array.from(radicand.querySelectorAll("*")).forEach(node => {
+            if (node.namespaceURI !== ns) include(node.getBoundingClientRect());
+        });
+        const range = document.createRange();
+        range.selectNodeContents(radicand);
+        Array.from(range.getClientRects()).forEach(include);
+        return result;
+    }
+
+    function draw(entry) {
+        const {root, radicand, svg, path} = entry;
+        let m = metrics(root);
+        if (!m.box.width || !m.box.height || !m.sx || !m.sy) return;
+        let b = bounds(radicand, m);
+        if (!b) return;
+        const em = number(m.style.fontSize) || 16;
+        const stroke = Math.max(1, em * .075);
+        const above = Math.max(1.5, em * .12);
+        const below = Math.max(1.5, em * .10);
+        const gap = em * .10;
+        let signWidth = em * .78;
+        Array.from(root.children).filter(node =>
+            node.classList.contains("cp-preview-root-index")).forEach(node => {
+                signWidth = Math.max(signWidth, node.getBoundingClientRect().width / m.sx + em * .35);
+            });
+        // Reserve real layout space for all visual overflow, not only SVG
+        // paint. Stable deltas avoid reset/re-measure flicker and observer loops.
+        setPx(root, "paddingLeft", Math.max(0, m.left + signWidth + gap - b.left));
+        setPx(root, "paddingRight", Math.max(0, m.right + b.right + gap + stroke - m.box.width / m.sx));
+        setPx(root, "paddingTop", Math.max(0, m.top + above + stroke - b.top));
+        setPx(root, "paddingBottom", Math.max(0, m.bottom + b.bottom + below + stroke - m.box.height / m.sy));
+        m = metrics(root);
+        b = bounds(radicand, m);
+        if (!b) return;
+        const width = m.box.width / m.sx, height = m.box.height / m.sy;
+        const bar = b.top - above, foot = b.bottom + below;
+        const start = bar + (foot - bar) * .60;
+        // One polyline: the rising stroke and the full vinculum share an
+        // endpoint. There is no independently positioned overbar to disconnect.
+        const points = [[stroke, start], [signWidth * .28, start - em * .10],
+            [signWidth * .52, foot], [b.left - gap, bar], [b.right + gap, bar]];
+        setAttr(path, "d", points.map((point, i) => (i ? "L" : "M") +
+            px(point[0]) + " " + px(point[1])).join(" "));
+        setAttr(path, "stroke-width", px(stroke));
+        setAttr(svg, "viewBox", "0 0 " + px(width) + " " + px(height));
+        setPx(svg, "width", width);
+        setPx(svg, "height", height);
+    }
+
+    const depth = node => {
+        let value = 0;
+        for (let el = node.parentElement; el; el = el.parentElement) ++value;
+        return value;
+    };
+    function drawAll() {
+        state.roots = state.roots.filter(entry => {
+            if (entry.root.isConnected) return true;
+            if (state.observer) state.observer.unobserve(entry.radicand);
+            return false;
+        });
+        state.roots.sort((a, b) => depth(b.root) - depth(a.root)).forEach(draw);
+        document.documentElement.setAttribute("data-calcpad-root-fix", "v3");
+        document.documentElement.setAttribute("data-calcpad-root-count", String(state.roots.length));
+    }
+    function queue() {
+        if (state.queued) return;
+        state.queued = true;
+        const run = () => { state.queued = false; drawAll(); };
+        if (window.requestAnimationFrame) window.requestAnimationFrame(run);
+        else window.setTimeout(run, 0);
+    }
+    function refresh() {
+        // A root can itself carry .eq, or the CLI may omit that wrapper. Exact
+        // numeric span pairs are the scope; prose/code and unpaired classes stay.
+        Array.from(document.querySelectorAll("span")).reverse().forEach(install);
+        drawAll();
+    }
+    state.refresh = refresh;
+    window.__calcpadRootFixV3 = state;
+    if (window.ResizeObserver) state.observer = new window.ResizeObserver(queue);
+    refresh();
+    document.addEventListener("DOMContentLoaded", refresh, {once: true});
+    window.addEventListener("load", refresh, {once: true});
+    window.addEventListener("resize", queue, {passive: true});
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", queue, {passive: true});
+    if (document.fonts) {
+        document.fonts.ready.then(queue);
+        if (document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", queue);
+    }
+})();
+</script>

@@ -1,0 +1,34 @@
+
+<script id="calcpad-clickable-line-script">
+(function () {
+    function installLineNumbers() {
+        const nodes = document.querySelectorAll(
+            ".calcpad-output p,.calcpad-output h1,.calcpad-output h2,.calcpad-output h3,.calcpad-output h4,.calcpad-output h5,.calcpad-output h6"
+        );
+
+        nodes.forEach((node, index) => {
+            if (node.dataset.cpLine) return;
+
+            const line = index + 1;
+            node.dataset.cpLine = String(line);
+
+            const span = document.createElement("span");
+            span.className = "cp-line-no";
+            span.textContent = String(line);
+            span.title = "Jump to editor line " + String(line);
+            span.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                document.title = "__calcpad_jump__:" + String(line);
+            });
+
+            node.insertBefore(span, node.firstChild);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", installLineNumbers);
+    window.addEventListener("load", installLineNumbers);
+    setTimeout(installLineNumbers, 0);
+    setTimeout(installLineNumbers, 100);
+})();
+</script>

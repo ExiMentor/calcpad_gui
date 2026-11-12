@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<language id="calcpad" name="Calcpad" version="2.0" _section="Scientific">
+  <metadata>
+    <property name="globs">*.cpd;*.cpdz</property>
+    <property name="line-comment-start">'</property>
+  </metadata>
+  <styles>
+    <style id="comment"   name="Comment"   map-to="def:comment"/>
+    <style id="string"    name="String"    map-to="def:string"/>
+    <style id="directive" name="Directive" map-to="def:preprocessor"/>
+    <style id="number"    name="Number"    map-to="def:decimal"/>
+    <style id="operator"  name="Operator"  map-to="def:operator"/>
+    <style id="greek"     name="Greek"     map-to="def:identifier"/>
+  </styles>
+  <definitions>
+    <context id="line-comment" style-ref="comment" end-at-line-end="true">
+      <start>'</start>
+    </context>
+    <context id="string-double" style-ref="string" end-at-line-end="true">
+      <start>"</start>
+      <end>"</end>
+    </context>
+    <context id="directive" style-ref="directive">
+      <match>#[A-Za-z_]+(\s+[a-zA-Z_]+)?</match>
+    </context>
+    <context id="number" style-ref="number">
+      <match>\b[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?\b</match>
+    </context>
+    <context id="operator" style-ref="operator" extend-parent="false">
+      <match>[+\-*/^=&lt;&gt;!&amp;|%]</match>
+    </context>
+    <context id="greek-backtick" style-ref="greek">
+      <match>`[A-Za-z@'"]</match>
+    </context>
+    <context id="calcpad" class="no-spell-check">
+      <include>
+        <context ref="line-comment"/>
+        <context ref="string-double"/>
+        <context ref="directive"/>
+        <context ref="greek-backtick"/>
+        <context ref="number"/>
+        <context ref="operator"/>
+      </include>
+    </context>
+  </definitions>
+</language>

@@ -1,0 +1,358 @@
+{
+  "normalization": [
+    {
+      "in": "C=4.7 µF\nx₁=U²+10⁻³",
+      "out": "C=4.7 μF\nx_1=U^2+10⁻^3"
+    },
+    {
+      "in": "R=R1 || R2 || R3\n",
+      "out": "R=1 / (1 / (R1) + 1 / (R2) + 1 / (R3))\n"
+    },
+    {
+      "in": "' R1 || R2\n#if A || B\nx=2*(R1 || R2) ' || comment\n",
+      "out": "' R1 || R2\n#if A || B\nx=2*(1 / (1 / (R1) + 1 / (R2)))' || comment\n"
+    },
+    {
+      "in": "a = || b\n(a || b\nx=a==b\n",
+      "out": "a = || b\n(a || b\nx=a==b\n"
+    },
+    {
+      "in": "V₁₂ = x¹² + y³\n",
+      "out": "V_12 = x^12 + y^3\n"
+    }
+  ],
+  "formatting": [
+    {
+      "in": "  x=2+3*4",
+      "out": "  x = 2 + 3 * 4"
+    },
+    {
+      "in": "x=2+3 ' a+b",
+      "out": "x = 2 + 3' a+b"
+    },
+    {
+      "in": "x=-2.3e-4",
+      "out": "x = -2.3e - 4"
+    },
+    {
+      "in": "U₁=R₁*I₁",
+      "out": "U₁ = R₁ * I₁"
+    },
+    {
+      "in": "sin(x)==1",
+      "out": "sin(x) == 1"
+    },
+    {
+      "in": "x=2 \"comment=2\"",
+      "out": "x = 2\"comment=2\""
+    }
+  ],
+  "preview": [
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": 0,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "d03b30042549d4663fc10852165a1ca170c816a51ddc791ab10ac69db8f24fb4"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": 0,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "d03b30042549d4663fc10852165a1ca170c816a51ddc791ab10ac69db8f24fb4"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": 3,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "ae9ffd3d398925fec665a8b4bf2a2f83269c8b1eda0f58323b9eeb71651fb2d7"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": 3,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "7dbf8ae48e8ecdf7c36832210ac869785af1cbba0dd367a1566777220eb2bcee"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": 10,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "65b53196217a32b210b546f9b089668b15ca89af1f6d4a322f862031240bfc23"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": 10,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "16552057a3dd86d458cc2a446ffd94c6b30eb51fc4a9a7dd362a32ccbb0db3b5"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": -2,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "d03b30042549d4663fc10852165a1ca170c816a51ddc791ab10ac69db8f24fb4"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": -2,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "d03b30042549d4663fc10852165a1ca170c816a51ddc791ab10ac69db8f24fb4"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": "bad",
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "ae9ffd3d398925fec665a8b4bf2a2f83269c8b1eda0f58323b9eeb71651fb2d7"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": "bad",
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "7dbf8ae48e8ecdf7c36832210ac869785af1cbba0dd367a1566777220eb2bcee"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": null,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "ae9ffd3d398925fec665a8b4bf2a2f83269c8b1eda0f58323b9eeb71651fb2d7"
+    },
+    {
+      "settings": {
+        "dark_preview": false,
+        "decimal_places": null,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "7dbf8ae48e8ecdf7c36832210ac869785af1cbba0dd367a1566777220eb2bcee"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": 0,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "adf84ef1d4969835c09967c9dc92e2f9457997cd25e3b048af31f899f661225c"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": 0,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "adf84ef1d4969835c09967c9dc92e2f9457997cd25e3b048af31f899f661225c"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": 3,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "c3bb5831b5a1d8581014050328df2e82084282630b070a7473a1f7fe82c030ee"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": 3,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "4b49000bf556edd62d0193e4069b09cb08210b66dfe82d37257dc49675bc073c"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": 10,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "7adf5d38bd4b3fe63b184d35caa5cdd1fa7f5796ca428e0f104cb96b019d35ab"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": 10,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "292a9a3cc6cd61773259e024b4c674aff67a9588865ca2d132a00ee3d6f9fa62"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": -2,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "adf84ef1d4969835c09967c9dc92e2f9457997cd25e3b048af31f899f661225c"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": -2,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "adf84ef1d4969835c09967c9dc92e2f9457997cd25e3b048af31f899f661225c"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": "bad",
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "c3bb5831b5a1d8581014050328df2e82084282630b070a7473a1f7fe82c030ee"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": "bad",
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "4b49000bf556edd62d0193e4069b09cb08210b66dfe82d37257dc49675bc073c"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": null,
+        "decimal_comma": false
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "c3bb5831b5a1d8581014050328df2e82084282630b070a7473a1f7fe82c030ee"
+    },
+    {
+      "settings": {
+        "dark_preview": true,
+        "decimal_places": null,
+        "decimal_comma": true
+      },
+      "body": "<div class=\"calcpad-output\"><p><span data-x=\"3.14159\">3.14159 -2.71828 1.25e-3</span><span class=\"o1\"><span class=\"r2\">1</span></span></p></div>",
+      "sha256": "4b49000bf556edd62d0193e4069b09cb08210b66dfe82d37257dc49675bc073c"
+    }
+  ],
+  "scroll": [
+    {
+      "in": "<body>x</body>",
+      "out_sha256": "90981e78552f476cad39abfd316bdfe4644d86c2c9d4b4a57187070dc1d6959e"
+    },
+    {
+      "in": "<BODY>x</BODY>",
+      "out_sha256": "292232d0577f583ebbf3c4312819de32eca2f1e72d610f72d9484a7308224067"
+    },
+    {
+      "in": "hello",
+      "out_sha256": "a8c9c068eb274d4d7675c161ad4705de991bbe2d512cbb1712ea7540c5c1e91e"
+    }
+  ],
+  "navigation": [
+    {
+      "in": "<body>x</body>",
+      "out_sha256": "1c479b87dec5e13ed419667c0162cce5524ab8571fc81994d915e41d21fdb2ef"
+    },
+    {
+      "in": "<BODY>x</BODY>",
+      "out_sha256": "f4019f0e2f6f3df5b7afe7b8a570d87aaabddd6154575f098f4f3e27c094c079"
+    },
+    {
+      "in": "hello",
+      "out_sha256": "610fa2c7e4ffa1d5033a1128d881ad5aef1f8a82ddde3ab5882803144ed17438"
+    }
+  ],
+  "ooxml": [
+    {
+      "in": "<m:oMath><m:r><m:t>1.25</m:t></m:r><m:r><m:t>μF</m:t></m:r></m:oMath>",
+      "comma": false,
+      "out": "<m:oMath><m:r><m:t>1.25</m:t></m:r><m:r><w:rPr><w:color w:val=\"119911\" /></w:rPr><m:t>μF</m:t></m:r></m:oMath>"
+    },
+    {
+      "in": "<m:oMath><m:r><m:t>1.25</m:t></m:r><m:r><m:t>μF</m:t></m:r></m:oMath>",
+      "comma": true,
+      "out": "<m:oMath><m:r><m:t>1,25</m:t></m:r><m:r><w:rPr><w:color w:val=\"119911\" /></w:rPr><m:t>μF</m:t></m:r></m:oMath>"
+    },
+    {
+      "in": "<m:r><w:rPr><w:color w:val=\"FF0000\" /></w:rPr><m:t>V</m:t></m:r>",
+      "comma": false,
+      "out": "<m:r><w:rPr><w:color w:val=\"119911\" /></w:rPr><m:t>V</m:t></m:r>"
+    },
+    {
+      "in": "<m:r><w:rPr><w:color w:val=\"FF0000\" /></w:rPr><m:t>V</m:t></m:r>",
+      "comma": true,
+      "out": "<m:r><w:rPr><w:color w:val=\"119911\" /></w:rPr><m:t>V</m:t></m:r>"
+    },
+    {
+      "in": "<m:r><w:rPr><w:b /></w:rPr><m:t>Ω</m:t></m:r>",
+      "comma": false,
+      "out": "<m:r><w:rPr><w:color w:val=\"119911\" /><w:b /></w:rPr><m:t>Ω</m:t></m:r>"
+    },
+    {
+      "in": "<m:r><w:rPr><w:b /></w:rPr><m:t>Ω</m:t></m:r>",
+      "comma": true,
+      "out": "<m:r><w:rPr><w:color w:val=\"119911\" /><w:b /></w:rPr><m:t>Ω</m:t></m:r>"
+    },
+    {
+      "in": "<m:r><m:t>variable</m:t></m:r><w:r><w:t>1.25 V</w:t></w:r>",
+      "comma": false,
+      "out": "<m:r><m:t>variable</m:t></m:r><w:r><w:t>1.25 V</w:t></w:r>"
+    },
+    {
+      "in": "<m:r><m:t>variable</m:t></m:r><w:r><w:t>1.25 V</w:t></w:r>",
+      "comma": true,
+      "out": "<m:r><m:t>variable</m:t></m:r><w:r><w:t>1.25 V</w:t></w:r>"
+    },
+    {
+      "in": "<m:r><m:t>3,14</m:t></m:r><m:r><m:t>m/s</m:t></m:r>",
+      "comma": false,
+      "out": "<m:r><m:t>3.14</m:t></m:r><m:r><m:t>m/s</m:t></m:r>"
+    },
+    {
+      "in": "<m:r><m:t>3,14</m:t></m:r><m:r><m:t>m/s</m:t></m:r>",
+      "comma": true,
+      "out": "<m:r><m:t>3,14</m:t></m:r><m:r><m:t>m/s</m:t></m:r>"
+    },
+    {
+      "in": "<m:r id=\"1\"><m:t xml:space=\"preserve\"> mA </m:t></m:r><m:r><m:brk /></m:r>",
+      "comma": false,
+      "out": "<m:r id=\"1\"><w:rPr><w:color w:val=\"119911\" /></w:rPr><m:t xml:space=\"preserve\"> mA </m:t></m:r><m:r><m:brk /></m:r>"
+    },
+    {
+      "in": "<m:r id=\"1\"><m:t xml:space=\"preserve\"> mA </m:t></m:r><m:r><m:brk /></m:r>",
+      "comma": true,
+      "out": "<m:r id=\"1\"><w:rPr><w:color w:val=\"119911\" /></w:rPr><m:t xml:space=\"preserve\"> mA </m:t></m:r><m:r><m:brk /></m:r>"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+
+<style id="calcpad-clickable-line-numbers">
+.calcpad-output p::before,
+.calcpad-output h1::before,
+.calcpad-output h2::before,
+.calcpad-output h3::before,
+.calcpad-output h4::before,
+.calcpad-output h5::before,
+.calcpad-output h6::before{
+    content:none !important;
+}
+.calcpad-output p,
+.calcpad-output h1,
+.calcpad-output h2,
+.calcpad-output h3,
+.calcpad-output h4,
+.calcpad-output h5,
+.calcpad-output h6{
+    position:relative;
+    padding-left:3.2em;
+}
+.cp-line-no{
+    position:absolute;
+    left:0;
+    top:0;
+    width:2.4em;
+    text-align:right;
+    color:#999;
+    font-family:monospace;
+    font-size:85%;
+    user-select:none;
+    cursor:pointer;
+}
+.cp-line-no:hover{
+    color:#0066dd;
+    text-decoration:underline;
+}
+.cp-line-flash{
+    outline:2px solid rgba(0,102,221,.35);
+    outline-offset:2px;
+}
+</style>

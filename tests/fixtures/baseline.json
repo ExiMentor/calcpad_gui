@@ -1,0 +1,1028 @@
+{
+  "baseline_sha256": "8e3289027cc18df3db5c3a092207c4f13793fc89ef32ffba1a07b848fe296e23",
+  "baseline_lines": 3013,
+  "window": {
+    "__init__": {
+      "digest": "93b409e82aae6a4a6d30a18a3b5846bef944dc0b20c9499e9d11567e0a784e08",
+      "descriptor": [],
+      "module": "window.py",
+      "class": "CalcpadWindow",
+      "mechanical": true,
+      "signature_digest": "5e3864372b8e850d9c80d16c81365bee07790665ad8bffbebd4716bbbd68ed76"
+    },
+    "_setup_editor_highlighting": {
+      "digest": "8dfcac216e42a6f66e83a74af5037554f90243cc8e4c1925145cc891b1b39a31",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_schedule_editor_highlighting": {
+      "digest": "d2a0838fb81e6c70fefab441d3d26c9f22d5b16ceeb9b20093a43819cc4d18ef",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "0eb121a25957bb1caf790cbc91341e30b9e5682e431810faaa2467f1c91734d4"
+    },
+    "_apply_editor_highlighting": {
+      "digest": "b81aed6ef05de3447cc87b1aa68133f0354b85526d00b7dcc4823a7f593d8b41",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_setup_zoom_controls": {
+      "digest": "6fc2344bba0291411447a66c96f06d2a2285f9b811f8fdeb937afa35817ff816",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_zoom_from_scroll": {
+      "digest": "e19e4ac3e7fcfd42635caeea18132f847541f837102b569748e1cd6ab45b4faf",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "f57005ddc1a59b1e0def1d886228443684136fe02275a5d65d112ac45c2e804d"
+    },
+    "_on_editor_ctrl_scroll_zoom": {
+      "digest": "27e06ec3552cb29fc1d36e62953a4b2f73ed1508e73526473a3fdd2c871086a3",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "2bf9252442b42da7fc018e06b79fd07f7030c3d0caec1e5b0bc80f15664bda7c"
+    },
+    "_on_preview_ctrl_scroll_zoom": {
+      "digest": "54903d43fd9532e7d6b7b660631b8fc2c3e6cbb8b7e4c9b16a81a2bb7048c3c4",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "2bf9252442b42da7fc018e06b79fd07f7030c3d0caec1e5b0bc80f15664bda7c"
+    },
+    "_apply_editor_zoom": {
+      "digest": "1aee341d373c9a6ac1631a96ccebff3dc8ae68d92a3328bec90fc167b7551535",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_apply_preview_zoom": {
+      "digest": "e9290f56b0308d37ce278796f586e72cded9e8077e44a92a95b3718e0233266b",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_setup_line_navigation_controls": {
+      "digest": "8d8381a475e355446b71f0fb574713eaa10d5d3b0cc38e9e8fe04281ca780a88",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_on_editor_gutter_click": {
+      "digest": "d896382339f74f7c1e3c5384842b587c2250624499dd85a044eade4e78630726",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "97dcdcbeb17d8df71b97aa3391655eabc18a32517b538a1988cfc0c67e0e160c"
+    },
+    "_on_editor_cursor_position_changed": {
+      "digest": "55f9e428a16cf57720844e258af68ec2674e4bb52a294939707c301964bcbfd2",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "0eb121a25957bb1caf790cbc91341e30b9e5682e431810faaa2467f1c91734d4"
+    },
+    "_scroll_output_to_line": {
+      "digest": "67e9f9680489330bf31f038c708cbc72fdfa10d0c517c0ec1f0c37adcb3d3b0d",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6809954e91edc65653bad4e12dcdbc2c25d056b8fa5191b06bea3a7ad86fff7a"
+    },
+    "_jump_editor_to_line": {
+      "digest": "612b21fd42a165b1964091937e18c6fe6f57344d20f253fe9e9c10ff4daad746",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6809954e91edc65653bad4e12dcdbc2c25d056b8fa5191b06bea3a7ad86fff7a"
+    },
+    "_inject_output_line_navigation": {
+      "digest": "a80f985f3bb3a82ab9ebd92940f5b44bb8dd526453e660b66996f771a16de10c",
+      "descriptor": [],
+      "module": "preview/html.py",
+      "class": "PreviewRenderer",
+      "mechanical": false,
+      "signature_digest": "a4b126c1fe9d0aa331e3ab6084567d9e161d2db5ec0dfb187e279f924dd1f2c8"
+    },
+    "_setup_format_controls": {
+      "digest": "efd15579a9511adebe5ec7a2960fa3b50f85bf95de6b4ed1b958695fb58bc748",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_on_format_key_pressed": {
+      "digest": "35a0309a2cffcab4061b4d8a2e93be32c2961ef865909c391fae0c1ee8ac3df7",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "2967d561c5e63b33ce9edaa3426b0f52f2eff5ddae18baadecae4a666521c796"
+    },
+    "_format_current_line": {
+      "digest": "13067718d433d2f96e1955d7a0abe29683b1eb321d1283aa0398a59c7426c226",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "0eb121a25957bb1caf790cbc91341e30b9e5682e431810faaa2467f1c91734d4"
+    },
+    "_format_calcpad_line": {
+      "digest": "4168da1cba8c0cc661e83f6e28fd354c41a2f662fd7e68c965faed7c2fc6a582",
+      "descriptor": [],
+      "module": "domain/expressions.py",
+      "class": "ExpressionTransforms",
+      "mechanical": true,
+      "signature_digest": "546371d8b319fba376031b5356e9c82725fe8b409203a0f67b2189a2f7e7daae"
+    },
+    "_start_with_empty_document": {
+      "digest": "3cc9edd4635630c31930dfed279d524d66a3089df8a4a27e9e74615fb4495c0a",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_setup_autocomplete_controls": {
+      "digest": "a5d5f6d713b24c735bfaac0998f3aa139bba860768e9f399d6dac520f19e15c0",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_schedule_autocomplete_update": {
+      "digest": "538cc2375deb8301a1b602d03ce4f37a11a84895a76fa294d0d9991409a917a2",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "0eb121a25957bb1caf790cbc91341e30b9e5682e431810faaa2467f1c91734d4"
+    },
+    "_on_autocomplete_key_pressed": {
+      "digest": "0786b19327acb1373dc67b9b2f3f1db7fd3c989ef541a165063f9ac30c5574fb",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "2967d561c5e63b33ce9edaa3426b0f52f2eff5ddae18baadecae4a666521c796"
+    },
+    "_hide_autocomplete_popover": {
+      "digest": "72bc771950e4f586ec9892ed5b0a9e60576fc83f3251f6aeaabdc4790a4c0051",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_update_autocomplete": {
+      "digest": "5c6c5b682c2b3bcc812ea34a8c37226ad625b0dd8970267cf2b02b3d6b4dfa21",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_position_autocomplete_popover": {
+      "digest": "3d0300d8a58ae5e018fb29081393937be6ab6698fd415babc5b7d2d54375aa08",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_get_autocomplete_prefix": {
+      "digest": "4a132f01571c7b6ad94e3eeb5b6f4168514e29980619b540cad4f8387ddd541b",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_get_autocomplete_suggestions": {
+      "digest": "bd801d7eca332e38b02a8008480c54c29f588bee91f1f629f214cbf85cc70709",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "05122826e252197971ca36f99a7fde970a0a64733a294535dc17bad0dce03779"
+    },
+    "_get_document_symbols_above_cursor": {
+      "digest": "78e7a9e1241877986821b8d36a3f8ea02229a854d8016e5a6f668e4fe6680dd3",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_rebuild_autocomplete_list": {
+      "digest": "732a07e82f24c7f58a1cca6326303c1a5f4c7c2755e7fc5187bcdd889d77b1ea",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_move_autocomplete_selection": {
+      "digest": "628034f70937a2d5a290f9fb15cb3297af022d9730433309d0d006fb283558cc",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "1f6eeafd5115e38cda0bec8172686c5c678e885f4919de5ef56acf1b4bdefc30"
+    },
+    "_on_autocomplete_row_activated": {
+      "digest": "c67b3d377ccace2b5152aab3d94ae6f786edb27437f05d7629025732802858f4",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "134fc44dc4d74bd633bbb9fdfdc0a65408df99c9b126c3b97359ea49caa6e4a3"
+    },
+    "_insert_autocomplete_selection": {
+      "digest": "88cfdcef9064efdbc97fdb0319e79f660ad1cdc5da96284ca8cb540c2c4e3576",
+      "descriptor": [],
+      "module": "ui/autocomplete.py",
+      "class": "AutocompleteActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_apply_app_theme": {
+      "digest": "fac35a5fa137fa8f144fb642577cc2b44fdbe20b9f5a1954786257537a4a82b4",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_build_search_bar": {
+      "digest": "6088616e9320860072bddf94673ca238f751fab7a8eccf03b64ed72ea37ead78",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_show_search_bar": {
+      "digest": "7312b05c8c2f76cd5a32b7a52dd1d9ef5fa8fee0299f906f213e96a12c028620",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "0eb121a25957bb1caf790cbc91341e30b9e5682e431810faaa2467f1c91734d4"
+    },
+    "_hide_search_bar": {
+      "digest": "7c2ead35f1b7589f920c91185ff77e74730033495a4be2225622ace4750af9a6",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_on_search_key_pressed": {
+      "digest": "323922f1c4bab7e789f27cb41c3feace8b6026c852866d84b5823dfed75ab1c1",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "2967d561c5e63b33ce9edaa3426b0f52f2eff5ddae18baadecae4a666521c796"
+    },
+    "_get_selected_text": {
+      "digest": "c063288496fe81c63d97c86f2c54754eeb537e0f06f38ec14f6a08283792d845",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_get_insert_iter": {
+      "digest": "83a3d57b0f13942d5334075b30ceb2a98064a250e282fce546970ddfb519a1fd",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_set_search_status": {
+      "digest": "f2e92e18530d28204da922daa8ae6cf5684775395340c3bdde8cc80de713f2bf",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "797a63e2d22d753da7e44469809f3c7d81bcb84fc7c2825e508cc3d0eba4ff1c"
+    },
+    "_find_next": {
+      "digest": "d5c5e4a10633498c768cc2f8d3f0de6a9816bae5321156ed491d3ae3c2393eb5",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_find_previous": {
+      "digest": "a11ab153eabd7c4f2044705c91ae55b5f2b77e1e55867125d635254f4cff7328",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_replace_current": {
+      "digest": "fe930588e6aa7d68d432b4df7286e44b398ac58775c996d3985f3e5e69e27a60",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_replace_all": {
+      "digest": "62c824ecf8c2e50db26637219344f66de1259981fe42e8147a6bb1a59d1f52f0",
+      "descriptor": [],
+      "module": "ui/search.py",
+      "class": "SearchActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_build_headerbar": {
+      "digest": "f23a8c47c944143f081ddbf5af6b36bda087d99a92419d457ddff7bfabd8f081",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": false,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_on_toggle": {
+      "digest": "29d8d30d9dd9e428f08e66b8f6dc4e762c768bc88aef440c906af80a7505bcf4",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "4ded240e4102a5817efe2a6c64911585129392129a5b963e276f548f8911d6b7"
+    },
+    "_on_keyboard_visible_toggled": {
+      "digest": "dc8333b2c5c261c5302ab03811855b4f04c0527a9fdbbe4cae35510c85573aee",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "b2852a72867a556286b28968483f66571760a3cfcfdcb547c0f2f6aab38ff346"
+    },
+    "_on_decimal_places_changed": {
+      "digest": "8ab3342f839600d138f8260d926b7b6671b7c54b8ae43d3e23ab24b14d172641",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "86964f5b0bd3e0bc01d51277d7648965db3ce81108f75ac39a6e2fb8ba3d0b45"
+    },
+    "_refresh_recent_menu": {
+      "digest": "15c645660379f64fdc981b7dc7dde930ad1a50227961994e6e6cd620a7cfed5f",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_clear_recent": {
+      "digest": "d88fd3d361eae65208f0407f9986b109d1e2fbf36fedeb6994d171dae1a48d5e",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_build_layout": {
+      "digest": "205ba61707e6e2fcc7250cebd0fe0a4fb11382113a543e37c25456f26fe58424",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_build_keyboard": {
+      "digest": "bb1c2270d19f828c7ce7bd6b2930c7d48cbee1d2d79cb23b8c51b2264bd4de71",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_favorite_key": {
+      "digest": "ca30d052b4c7db47a417b70c40d296a9b523ce59fa6becc61bbc2dd7b225461a",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "b3ba4562a7836036f1a029bcb72d3825ac572abed3348751781e7e9271ea8623"
+    },
+    "_get_keyboard_favorites": {
+      "digest": "2c806b2293bb56717d7d5e12353347959cb4fc4d61155f1f6c41004b5ccaa591",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_get_keyboard_favorite_rows": {
+      "digest": "93b7685b5e9021493e90acabf6590d7c7953d165742b90179bf20d2f24861ee7",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_attach_keyboard_favorite_toggle": {
+      "digest": "1f16fca327d66162c8868bf9779a508aa37a51791fd4fbb3bcc74930ccbff0df",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "b2852a72867a556286b28968483f66571760a3cfcfdcb547c0f2f6aab38ff346"
+    },
+    "_toggle_keyboard_favorite": {
+      "digest": "90e1af263919aaf660a2bfc99f73a4c360f8631eeac8763692e1f0f4adc3a4fa",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "b2852a72867a556286b28968483f66571760a3cfcfdcb547c0f2f6aab38ff346"
+    },
+    "_kbd_toggle_greek_case": {
+      "digest": "d7cf427cb07b1d626557bf42ee6bb36b1624e38069084c14a4909b468d1a76cf",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_kbd_clear": {
+      "digest": "bf7feb932dc0017d57b5736b496f9e634091bb69e09eb084147e1aa2ced4594c",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_kbd_backspace": {
+      "digest": "fe4caa712b6b5dd1b15c92f4b93eefbe5a766bd27d2bfb931109d7c700f80d1c",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_build_quick_toolbar": {
+      "digest": "72fccbb79fe098c9bf1e4e18f114db14e23b620a97419f3d176f5d3d36b7d18d",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_build_symbol_sidebar": {
+      "digest": "c371186d016b0990ee5932e09f8a7610b9edafd670c4c1e505007aae45f389c8",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_populate_symbols": {
+      "digest": "7b863003a214ca652e562a84ab24637aef232c981a2ec479dc83578b61af5e29",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "079378cbb460131041073dd5f4ffb63f95ad6b34012f5ba16a59a9082c446a05"
+    },
+    "_on_symbol_search": {
+      "digest": "2706a53354b96ec6b58d55a5b316af56bed4d0dbfd260851399d72d93692f307",
+      "descriptor": [],
+      "module": "ui/keyboard.py",
+      "class": "KeyboardActions",
+      "mechanical": true,
+      "signature_digest": "460aadc59ceb2fb29cc90347a1fa28995f17b024d614fbb1b230df3e7419937e"
+    },
+    "_build_editor": {
+      "digest": "a701d326f6a720af5872e0049bebf37c32ffa9a8ab14f43159a812029a3e1dc5",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_build_preview": {
+      "digest": "7821242de127a86e851e55a1c67cca0ba135b2397618fc2ddd46b90d538c7123",
+      "descriptor": [],
+      "module": "ui/preview.py",
+      "class": "PreviewActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_js_value_to_float": {
+      "digest": "a2ab99972350fe4cde743d1a741ad92fb5edf778d8b0cb8bb5a24b6f2b80d4fa",
+      "descriptor": [],
+      "module": "ui/preview.py",
+      "class": "PreviewActions",
+      "mechanical": true,
+      "signature_digest": "78e8a78c2ae58212a0a1f0421bf4408e8b809e6627e18bc393409b8b0fe444c5"
+    },
+    "_eval_webview_js": {
+      "digest": "46ef2f6755892f03986b99eca7e20281c9eb36b7ab1f9006646a48ea983d75a7",
+      "descriptor": [],
+      "module": "ui/preview.py",
+      "class": "PreviewActions",
+      "mechanical": true,
+      "signature_digest": "7bb17dc9364b1349de49c8350a84e593efaee2af801d3eba176e0a05a003790a"
+    },
+    "_finish_webview_js": {
+      "digest": "180ba4c680e8bbb8a11cd178b70fd7a15226ee4d80177040b0fa084c5ee8a2d0",
+      "descriptor": [],
+      "module": "ui/preview.py",
+      "class": "PreviewActions",
+      "mechanical": true,
+      "signature_digest": "01e75086a372b13969b70b9b2c514a6874bdfd7bc79b3c72d86bab785b5cf2a9"
+    },
+    "_load_preview_preserving_scroll": {
+      "digest": "a8a549c8f39b23f798d126bb52a2acd1ae0128f55ecad477a688c92cf13d7201",
+      "descriptor": [],
+      "module": "ui/preview.py",
+      "class": "PreviewActions",
+      "mechanical": true,
+      "signature_digest": "e1e121570e0c501fa305cf02ca640c1ff90a89a87f9140790bce9c79481bdaef"
+    },
+    "_on_preview_title_changed": {
+      "digest": "ed9d476e65a4cb709e2644e3cdc781739ddd7b0c3f99c72a3124bd8ecb3376cf",
+      "descriptor": [],
+      "module": "ui/preview.py",
+      "class": "PreviewActions",
+      "mechanical": true,
+      "signature_digest": "57a432d1741f5c4c8761304fa9411de825c9a0bd0d2375a72565fec8975aa3dd"
+    },
+    "_on_preview_load_changed": {
+      "digest": "cd4b47434f0fc723339621480ab7605acfa448fc7f1767bd42bff0030cfb5a2d",
+      "descriptor": [],
+      "module": "ui/preview.py",
+      "class": "PreviewActions",
+      "mechanical": true,
+      "signature_digest": "780e730951a603e0dc1813942e63ebb306cb06a6d1d136dbec1f6fcd9f18bb07"
+    },
+    "_format_preview_numbers": {
+      "digest": "42ef43a5c1b2bcd13ed26d69b4ccf0646f1515b1f20ab16d0a02e9ce6cbdf901",
+      "descriptor": [],
+      "module": "domain/numbers.py",
+      "class": "NumberFormatting",
+      "mechanical": true,
+      "signature_digest": "a4b126c1fe9d0aa331e3ab6084567d9e161d2db5ec0dfb187e279f924dd1f2c8"
+    },
+    "_wrap_preview": {
+      "digest": "90d9e0ead23175d02ccc50abd74654c59e76c419514e4bfb95cec8122428b0d6",
+      "descriptor": [],
+      "module": "preview/html.py",
+      "class": "PreviewRenderer",
+      "mechanical": false,
+      "signature_digest": "b275c83a7f30b1397499c46e8818e342164c90349418fe4e9a7e104b7f4d0dcf"
+    },
+    "_install_shortcuts": {
+      "digest": "7f191e05328f5e1190d5eb2c87fa8f61846ca47d1a484c00f606094e8f6303b7",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "insert_at_cursor": {
+      "digest": "dfc289980598aafe72b9dbfad7f1ca096f4cb2f126109a74d584e99460dc3359",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "d2ac402efdf3da866c27127d84cc9e8a8f560b1d74140104a2d8feb09c9f942d"
+    },
+    "_get_buffer_text": {
+      "digest": "96184427300035dcd094e54955f7ff9b3c8ae6ee049d9af4731fa3bc2aba91dc",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_get_text_for_cli": {
+      "digest": "b34ee36ff60bff7a7c21c35e07e78e432996e6e89e27f509aff08fd4140a32c3",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_get_text": {
+      "digest": "ad98d772b3b0307525a81eedc32eba25058914b7ebfee4f6d4a5bc7dc6121b9c",
+      "descriptor": [],
+      "module": "ui/editor.py",
+      "class": "EditorActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_parallel_resistance_expression": {
+      "digest": "2b3f83062fdd537a8375e116e634531dd2521e3af292b05a387cd3c042d20278",
+      "descriptor": [
+        "classmethod"
+      ],
+      "module": "domain/expressions.py",
+      "class": "ExpressionTransforms",
+      "mechanical": true,
+      "signature_digest": "236e24ea70cfabe70cd306dda767038d563dde6e875175f7bb9c279f3d4591a1"
+    },
+    "_expand_parallel_resistors": {
+      "digest": "a97bb52f57da4aacb17cedd5312011c6d410d1d1f310104e99b14668f6ae1800",
+      "descriptor": [
+        "classmethod"
+      ],
+      "module": "domain/expressions.py",
+      "class": "ExpressionTransforms",
+      "mechanical": true,
+      "signature_digest": "4e094e80f5a122607323a9e6e4160a9e408c0412dedefef1e73c7b675eda7057"
+    },
+    "_normalize": {
+      "digest": "07b5a73e41a906c611db4b057bb33838e4de30f9022a0599d536e67ef034fefc",
+      "descriptor": [],
+      "module": "domain/expressions.py",
+      "class": "ExpressionTransforms",
+      "mechanical": true,
+      "signature_digest": "d2ac402efdf3da866c27127d84cc9e8a8f560b1d74140104a2d8feb09c9f942d"
+    },
+    "_on_modified_changed": {
+      "digest": "d6b43855865f5de2292e1b5380be412daa951b5a7f3197cd5fa366f1d70581b7",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "2052b8394ed10dfa46fb84f492ecd27f830b1c9fdf18dec876fd82f8cd18d5aa"
+    },
+    "_refresh_title": {
+      "digest": "372c996d5af0926e7544c7afe9a6574dc873aa4448e09e318c2543ee0e296879",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "is_dirty": {
+      "digest": "8bf7b24a575ed7712a19356a1ea306b3d00e54d81568b5ef052e61de22edab5c",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_on_close_request": {
+      "digest": "2c6354fb7c2589afcf93344cce2716b9502979eed98ebb7f50a223ec034b8538",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "140f3a90f27c8c0d6ec6fd0e3f3834743524a0be0c2d0a35a54b68ad92394f03"
+    },
+    "_on_close_response": {
+      "digest": "c0d71926d2ddea9b13f61b5d80a343dff5049b0f0d1df691d6219c61e696b22e",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "701c874eba03b8380bce2f54af4b82d1430f07c13d0f814c7b2b63c6e4cebab3"
+    },
+    "_close_after_save": {
+      "digest": "2f29116dfb64eff8bbb331e8a66b4f0772f5c2ea2f10690b1260feeea3c909b3",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "61bbec3249929c89e8b8455ce8e9ee70f2eb531474c8d8f696cefc52452ad917"
+    },
+    "_dots_to_commas": {
+      "digest": "187e1f1ba554662f254e2f419804c91c8453644fe8cf754fdfb82311a9ab9078",
+      "descriptor": [
+        "staticmethod"
+      ],
+      "module": "domain/numbers.py",
+      "class": "NumberFormatting",
+      "mechanical": true,
+      "signature_digest": "3b9653dbd419cae247a5337605a07601c57500ad19f1d722f43006e11d645d13"
+    },
+    "_apply_decimal_comma_html": {
+      "digest": "7a9020727c9dae6dd4007716f9d095f3130d30c1844b1dee612c9ff90d056108",
+      "descriptor": [],
+      "module": "domain/numbers.py",
+      "class": "NumberFormatting",
+      "mechanical": true,
+      "signature_digest": "a4b126c1fe9d0aa331e3ab6084567d9e161d2db5ec0dfb187e279f924dd1f2c8"
+    },
+    "_process_ooxml_formula_runs": {
+      "digest": "46d1d830c62121501b73af8d33e085591787df7cb010d11ebd6ea0540628efde",
+      "descriptor": [
+        "staticmethod"
+      ],
+      "module": "domain/docx.py",
+      "class": "DocxProcessing",
+      "mechanical": true,
+      "signature_digest": "9a70a6ae2f55d59d7aa03692a2bd95516f3b4d4aeda5c8805a53b6b65c4b3b21"
+    },
+    "_postprocess_docx": {
+      "digest": "2efdfac30ce5238db53e51c3b2f22f895ff0b9fd5179414aef1c91cc071fb352",
+      "descriptor": [],
+      "module": "domain/docx.py",
+      "class": "DocxProcessing",
+      "mechanical": true,
+      "signature_digest": "b2252ed01337ad56deee77da3d469881cdf19c1c5aed851765c713c5c922ec70"
+    },
+    "_apply_decimal_comma_docx": {
+      "digest": "7241d0c976ce50134a698ee0cd3f5fb617de0b8320df0dfee9d0b6ada8353742",
+      "descriptor": [],
+      "module": "domain/docx.py",
+      "class": "DocxProcessing",
+      "mechanical": true,
+      "signature_digest": "f0a9d63306e57b4b2ad8d7d93024439ff3c13dd4363259f42d3b24a81aae7b9e"
+    },
+    "on_text_changed": {
+      "digest": "e8d9c69d574a9bac639ea74c42b161caa6844cee55acd23de504aa3f12ea03e7",
+      "descriptor": [],
+      "module": "ui/calculation.py",
+      "class": "CalculationActions",
+      "mechanical": true,
+      "signature_digest": "e88443ba4147c222e8feaa7682bae677cd16db35a97bb699930436ac4f3041e6"
+    },
+    "_debounced_run": {
+      "digest": "2910e6903a2252f521d79a77ebecc96cbdbeec761e3115220ccead9b7677de3c",
+      "descriptor": [],
+      "module": "ui/calculation.py",
+      "class": "CalculationActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_code_with_decimal_places": {
+      "digest": "76d20c9eb856709f7f17d46c794cf67f61f93e8e6d4a7cb6a70f9d35973abd72",
+      "descriptor": [],
+      "module": "domain/numbers.py",
+      "class": "NumberFormatting",
+      "mechanical": true,
+      "signature_digest": "1dcfa9cca0150a8f969be387746638901f1adb9d6bcdf553204e67030a05f3c8"
+    },
+    "_run_cli": {
+      "digest": "75274b53c49b70e2607f59915041271771c089faedb2aefd421d62a50a8b0acc",
+      "descriptor": [],
+      "module": "ui/calculation.py",
+      "class": "CalculationActions",
+      "mechanical": false,
+      "signature_digest": "5ea2bd6cdf8254b108725e92f36d6d3bdc966990a18fcf475e87c478809a4e7e"
+    },
+    "on_run": {
+      "digest": "3179acf0a7bbd2caf2a0ea63d8c262aa0cabfeb99042610098e8a2ded4d07db2",
+      "descriptor": [],
+      "module": "ui/calculation.py",
+      "class": "CalculationActions",
+      "mechanical": true,
+      "signature_digest": "194d85714d15e86e4930b71c44414651983cffd0ed9d9f8795bcd49a3435a245"
+    },
+    "_finish_run": {
+      "digest": "83e5977250dad4b10908d45abe657edac8db842a87e9be60b38388e2414ae28a",
+      "descriptor": [],
+      "module": "ui/calculation.py",
+      "class": "CalculationActions",
+      "mechanical": true,
+      "signature_digest": "203c8f6c227adac63ec161cd28294e9b8790b71af1577720bf96151a858fd797"
+    },
+    "on_new": {
+      "digest": "6ac2eb47e4b879d7f8178bb8422d15eabd3e0481acfefc8009167dee19ad5a11",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "8754822ad09e934f1321854674e396c318b9a8980aee10de679bbec8019d1957"
+    },
+    "_do_new": {
+      "digest": "d0abd9d5e2d4aa694261f934f4b91b35cfdd5f13f32175a1f500a6927e9c6ccf",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_confirm_discard": {
+      "digest": "2f47760357ece4c5b7da0789904a2687a968d641c90fcd983b9cc92e69e41e21",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "9cfcfbe94eb34a12795dd8612338ed9ee48620ca1c1c9a8c3f7d7113869dc748"
+    },
+    "on_open": {
+      "digest": "dc3ff0aabb2a603984e4d98b75fdd7b9bb41bbfa8f9054d5696e46f4ab6f2612",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "194d85714d15e86e4930b71c44414651983cffd0ed9d9f8795bcd49a3435a245"
+    },
+    "_show_open_dialog": {
+      "digest": "9fecf9f1eac46a7d679c1e43757f6d9006c3a2ca3234a6cd23c0351ee2b683c7",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_open_done": {
+      "digest": "c4da92c5c7087d3e56c055771d62e83d20193ddd9479ac05cc07238638b15bd4",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "701c874eba03b8380bce2f54af4b82d1430f07c13d0f814c7b2b63c6e4cebab3"
+    },
+    "open_file_path": {
+      "digest": "15cf722b10d0c123d03eeda954472ee6fba4bb860c4fbab8acd3cc866d2e41f9",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "20e6f1f6250895c9273418c1ba1bf5689d28c3ddff502e538277b376337ad1b4"
+    },
+    "_open_path": {
+      "digest": "cc6f50c46ee3e8999bddc33fa264efbbf09b035cec33515f39b81687c96e1cf8",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "20e6f1f6250895c9273418c1ba1bf5689d28c3ddff502e538277b376337ad1b4"
+    },
+    "on_save": {
+      "digest": "7399020c8301d31eab527ccb5a5aaca3d6fcf7878bd024fa0baa9d3d2f4c2239",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "2f0882ba113d5e28aeec522425cae65735f4573ea9a7e19d4b6c360dd6d07d43"
+    },
+    "on_save_as": {
+      "digest": "e0345f9e0970dcaa05b0c53315a0284860d10c22f17d5dbe100e4ac17991f8b5",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "194d85714d15e86e4930b71c44414651983cffd0ed9d9f8795bcd49a3435a245"
+    },
+    "_show_save_dialog": {
+      "digest": "3c14c51d43cb3918ed6b043796fa7690e29c77e13d3e0c128bc50a76bd15a234",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "bacc6d00a5c1db67e7e6c0169a03ac4743f3bd91fa3138aaa2c3407f97375292"
+    },
+    "_save_done": {
+      "digest": "41ff8b0ed415e82a48dbc7e96c8769a05845e51b28207d656029e1cee2e13136",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "cd971229fbe6322e22bd6d4deb9a55d152ba8b9363f9c69fb48c22c0f34c5c79"
+    },
+    "_add_recent": {
+      "digest": "73423a0ba60f7dcb5086b69900a512cc071cebd23cfb377db6276e9b3615f854",
+      "descriptor": [],
+      "module": "ui/files.py",
+      "class": "FileActions",
+      "mechanical": true,
+      "signature_digest": "20e6f1f6250895c9273418c1ba1bf5689d28c3ddff502e538277b376337ad1b4"
+    },
+    "_reserve_quick_docx": {
+      "digest": "64376e0f9f7045af6390d9306e4ef0af94ce6ae53708f1a50be0f050c97ecdc5",
+      "descriptor": [],
+      "module": "ui/exports.py",
+      "class": "ExportActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_open_quick_docx": {
+      "digest": "9592d82893e76ee0d09ad0dac269a1c7034c5d3e1682f1ae6d9cc15ae3c5c506",
+      "descriptor": [],
+      "module": "ui/exports.py",
+      "class": "ExportActions",
+      "mechanical": true,
+      "signature_digest": "710641c1912b183f898f8703c49ee89d3731f336bb1b1c0d33780a07c8ae35d2"
+    },
+    "_quick_export_docx": {
+      "digest": "13678d9f5b6dd328128942429f6e1b1a653d99314a223ecbad6cd262d7b226e3",
+      "descriptor": [],
+      "module": "ui/exports.py",
+      "class": "ExportActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    },
+    "_export": {
+      "digest": "474bb7f73f015e6125b69688a1a9b402432544dcc412da7bec33e744c2e8499b",
+      "descriptor": [],
+      "module": "ui/exports.py",
+      "class": "ExportActions",
+      "mechanical": true,
+      "signature_digest": "42586398b363cf130a6f35d4d0aa073fdb743659781378a3261fa8c21a0ab0cc"
+    },
+    "_export_done": {
+      "digest": "7b6a15c85b985f739d5f89b4905a71b1d9644f0a6fa2f3898611f25e0ebd2bde",
+      "descriptor": [],
+      "module": "ui/exports.py",
+      "class": "ExportActions",
+      "mechanical": true,
+      "signature_digest": "52434fc59ea4732c5c386f31fdd75b6a3980efb3963755c48364f362fe63df69"
+    },
+    "set_status": {
+      "digest": "76df14bb1807f1760355725647bfe859db1d1daaff93bf7098263929533c4db9",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "797a63e2d22d753da7e44469809f3c7d81bcb84fc7c2825e508cc3d0eba4ff1c"
+    },
+    "_initial_run": {
+      "digest": "b9e21d8fa9723cc6fe17689a9fa2a01a387ad40a017783ed799370ab6b6e7b0c",
+      "descriptor": [],
+      "module": "ui/chrome.py",
+      "class": "ChromeActions",
+      "mechanical": true,
+      "signature_digest": "6ca322e58c7dc4f08b1036d1522fdc353b8b3df3afd17f37293986175aad331e"
+    }
+  },
+  "app": {
+    "__init__": "83824361c7ff3c4b52955991fbd4be2eb78035c98704efc7cca4e6ac2f38eeb4",
+    "do_activate": "e8f593b3f65a16facbeb1d7fe9e1645442fede470a3986c4fffa679eddb9eead",
+    "do_open": "0e06f46f9530efb5f32833cd6ee7baf217b6fac28a1d1347c4f201bdf62fd0d8"
+  },
+  "functions": {
+    "ensure_calcpad_language": "fe91cf3ed73308cacab94b83ad67dcbb740dd1ec6e603f47baf1390b7cd182cb",
+    "load_settings": "ef35d13afb1b538f2ef95cc9ef384e55879498aeab8927459d165ef6f073150c",
+    "save_settings": "72a3809a1b2ce645ab12198c90a67e06782684fa2119b2a25a7d75301cf00941",
+    "discover_cli": "4fe431376b5c713a2a032be211c41a7a631d2076886f6805793f268a0457911d",
+    "inject_output_scroll_restore": "48c95db229684a567a78f0ca6ecc490ec5506801afc046e2f119e219033c1913",
+    "run_doctor": "b28389e5e78d33733b0e16ffc29702ff60f136142c56627490077d14ac19c0c7",
+    "main": "6507763d6bac2db7ad99bf0766d2448c065cadaea99b5c63bc3584a5191d83d4"
+  },
+  "resources": {
+    "calcpad.lang": "92e694b0eea7c54f860a06175ab5b0af55248e9357deec9331ed394410650aa9",
+    "line-navigation.css.html": "48e9451318e33fc15312510714dc0983a1236ed4121bc9e7ac107b6c5816c6ac",
+    "line-navigation.js.html": "f63048ef4e19f16d0f3ab5f4f476980fe132d882576576d9bded3e44d53ffdac",
+    "preview-dark.css": "ad4627e18973c15c255f7a2255f5baa626dd08d5e5f8432a5ac323c16df3be4a",
+    "preview.css": "086aee7e0b46bfeca86e5d27fd8f1252aa9678b666742bf45707455886b67416",
+    "root-fix-v3.html": "62572f6a6620ad55212b414df36ae9859408e6928911ee337f5009d7f0e05f0b"
+  },
+  "resource_replacements": {
+    "_wrap_preview": {
+      "css": "preview.css",
+      "root_script": "root-fix-v3.html"
+    },
+    "_inject_output_line_navigation": {
+      "css": "line-navigation.css.html",
+      "js": "line-navigation.js.html"
+    }
+  },
+  "cli_service_body_digest": "110f0fce4b4fe7f78ed8c352404ec6678c47f7f0088b949192f6ce834e50fb7e",
+  "data_digests": {
+    "APP_ID": "8a0aa2f0c17d28d358e730c7cbd867c761c476c13296b8f2f74e79c269cab9e8",
+    "APP_TITLE": "1b1fd18f5dbd534a7970d9508c870687adfa64e7a793698fe05cf22a4c7cfc17",
+    "_SUPER_DIGITS": "15084c0a2cdb8b93d46ed740fe6f17b571a47b94a96384ecec20e697566ddaa4",
+    "_SUB_DIGITS": "7fd93c9573142700aa95f624a91ae1dcc383abea42bfc867b208c239bda5c26f",
+    "DEFAULT_SETTINGS": "62053883d1ae26256871448d430f7629c92a1299e8ab1a558520cda57b8ce2d8",
+    "DEFAULT_SAMPLE": "878ce5224236c3e32d2efda8075d9e0586ad32a42a25f68bda081822d45388c7",
+    "GREEK_TABLE": "5250ec3cc8b2e589fa1f04e66dc003fc523c8a6552d7520c024d9ce245f2f1e3",
+    "SYMBOL_TABLE": "eaada25e3ddd5550aa284dac2a487672f04020d7df09e182146f958e43f9e190",
+    "QUICK_TOOLBAR": "52b47de149a5ddd61fc3bf433258d806c89be12ac64c9e1ede73218b30cdbc08",
+    "QUICK_HOTKEYS": "a4a4631c937e12ef7d06c1d09130e7d04ae990be9073766bc55815a9354dc21c"
+  },
+  "desktop_version_gate_digest": "4f249f57ce1357fea5d82608a98b8af90c9eab0082e60ca043093b1541184177"
+}
