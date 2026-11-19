@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+APPDIR="$(cd "$(dirname "$0")" && pwd)"
+
+export CALCPAD_CLI="$APPDIR/usr/lib/calcpad-core/Cli"
+export PYTHONPATH="$APPDIR/usr/lib/calcpad-gui${PYTHONPATH:+:$PYTHONPATH}"
+
+cd "$APPDIR/usr/lib/calcpad-core"
+
+exec python3 -m calcpad_gui "$@"
