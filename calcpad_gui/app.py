@@ -377,6 +377,9 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         self.buffer.connect("changed", self._schedule_editor_highlighting)
         GLib.idle_add(self._apply_editor_highlighting)
 
+        # Highlight tags now exist, so apply the current theme colors.
+        self._apply_app_theme()
+
     def _schedule_editor_highlighting(self, *_args):
         if getattr(self, "_editor_highlight_source_id", 0):
             GLib.source_remove(self._editor_highlight_source_id)
@@ -413,9 +416,19 @@ class CalcpadWindow(Gtk.ApplicationWindow):
         def in_comment(pos):
             return any(a <= pos < b for a, b in comment_ranges)
 
+        # Collect variables defined on the left side of assignments and
+        # highlight all occurrences of those variables throughout the code.
+        variable_names = set()
+
         for m in re.finditer(r"(?m)^[ \t]*([A-Za-z_Α-Ωα-ωµμ][A-Za-z0-9_Α-Ωα-ωµμ]*)[ \t]*=", text):
             if not in_comment(m.start(1)):
-                apply_range("var", m.start(1), m.end(1))
+                variable_names.add(m.group(1))
+
+        for name in sorted(variable_names, key=len, reverse=True):
+            pattern = rf"(?<![A-Za-z0-9_Α-Ωα-ωµμ]){re.escape(name)}(?![A-Za-z0-9_Α-Ωα-ωµμ])"
+            for m in re.finditer(pattern, text):
+                if not in_comment(m.start()):
+                    apply_range("var", m.start(), m.end())
 
         for m in re.finditer(
             r"\b(?:sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|sqrt|root|root2|ln|log|exp|abs|min|max|round|trunc|floor|ceiling|random|sign|conj|re|im|phase|area|slope|sup|inf)\b(?=\s*\()",
@@ -425,7 +438,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
             if not in_comment(m.start()):
                 apply_range("func", m.start(), m.end())
 
-        unit_pattern = r"(?<![A-Za-z_])(?:MΩ|kΩ|Ω|µF|μF|uF|mF|nF|pF|µH|μH|uH|mH|nH|µV|μV|uV|mV|kV|V|µA|μA|uA|mA|A|mW|kW|W|MHz|kHz|Hz|MPa|kPa|Pa|mm|cm|km|ms|°C|K|m|s)(?![A-Za-z_])"
+        unit_pattern = r"(?<![A-Za-z_])(?:MΩ|kΩ|Ω|µF|μF|uF|mF|nF|pF|µH|μH|uH|mH|nH|µV|μV|uV|mV|kV|V|µA|μA|uA|mA|A|mW|kW|W|µJ|μJ|uJ|mJ|kJ|J|MHz|kHz|Hz|MPa|kPa|Pa|mm|cm|km|ms|°C|K|m|s)(?![A-Za-z_])"
         for m in re.finditer(unit_pattern, text):
             if not in_comment(m.start()):
                 apply_range("unit", m.start(), m.end())
@@ -1093,6 +1106,38 @@ class CalcpadWindow(Gtk.ApplicationWindow):
     def _apply_app_theme(self):
         dark = bool(self.settings.get("dark_preview", False))
 
+        # Adapt syntax highlighting colors to the active editor theme.
+        light_highlight_colors = {
+            "var": "#0066dd",
+            "unit": "#119911",
+            "func": "#7a3db8",
+            "number": "#cc0088",
+            "bracket": "#cc0088",
+            "op": "#c08030",
+            "keyword": "#cc0088",
+            "text": "#006400",
+        }
+
+        dark_highlight_colors = {
+            "var": "#75b7ff",
+            "unit": "#7ec987",
+            "func": "#c792ea",
+            "number": "#f78cbe",
+            "bracket": "#f78cbe",
+            "op": "#ff9f43",
+            "keyword": "#f78cbe",
+            "text": "#ffd866",
+        }
+
+        colors = dark_highlight_colors if dark else light_highlight_colors
+
+        try:
+            for name, color in colors.items():
+                if name in self._hl_tags:
+                    self._hl_tags[name].set_property("foreground", color)
+        except Exception:
+            pass
+
         try:
             self.editor.set_highlight_current_line(not dark)
         except Exception:
@@ -1116,7 +1161,7 @@ class CalcpadWindow(Gtk.ApplicationWindow):
                 textview#calcpad-editor,
                 textview#calcpad-editor text {
                     background-color: #1e1e1e;
-                    color: #d8d8d8;
+                    color: #ffffff;
                     caret-color: #ffffff;
                 }
 
