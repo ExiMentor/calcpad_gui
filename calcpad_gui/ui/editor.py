@@ -32,6 +32,9 @@ class EditorActions:
         self.buffer.connect("changed", self._schedule_editor_highlighting)
         GLib.idle_add(self._apply_editor_highlighting)
 
+        # Highlight tags now exist, so apply the current theme colors.
+        self._apply_app_theme()
+
     def _schedule_editor_highlighting(self, *_args):
         if getattr(self, "_editor_highlight_source_id", 0):
             GLib.source_remove(self._editor_highlight_source_id)
@@ -68,9 +71,19 @@ class EditorActions:
         def in_comment(pos):
             return any(a <= pos < b for a, b in comment_ranges)
 
+        # Collect variables defined on the left side of assignments and
+        # highlight all occurrences of those variables throughout the code.
+        variable_names = set()
+
         for m in re.finditer(r"(?m)^[ \t]*([A-Za-z_Α-Ωα-ωµμ][A-Za-z0-9_Α-Ωα-ωµμ]*)[ \t]*=", text):
             if not in_comment(m.start(1)):
-                apply_range("var", m.start(1), m.end(1))
+                variable_names.add(m.group(1))
+
+        for name in sorted(variable_names, key=len, reverse=True):
+            pattern = rf"(?<![A-Za-z0-9_Α-Ωα-ωµμ]){re.escape(name)}(?![A-Za-z0-9_Α-Ωα-ωµμ])"
+            for m in re.finditer(pattern, text):
+                if not in_comment(m.start()):
+                    apply_range("var", m.start(), m.end())
 
         for m in re.finditer(
             r"\b(?:sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|sqrt|root|root2|ln|log|exp|abs|min|max|round|trunc|floor|ceiling|random|sign|conj|re|im|phase|area|slope|sup|inf)\b(?=\s*\()",
@@ -80,7 +93,7 @@ class EditorActions:
             if not in_comment(m.start()):
                 apply_range("func", m.start(), m.end())
 
-        unit_pattern = r"(?<![A-Za-z_])(?:MΩ|kΩ|Ω|µF|μF|uF|mF|nF|pF|µH|μH|uH|mH|nH|µV|μV|uV|mV|kV|V|µA|μA|uA|mA|A|mW|kW|W|MHz|kHz|Hz|MPa|kPa|Pa|mm|cm|km|ms|°C|K|m|s)(?![A-Za-z_])"
+        unit_pattern = r"(?<![A-Za-z_])(?:MΩ|kΩ|Ω|µF|μF|uF|mF|nF|pF|µH|μH|uH|mH|nH|µV|μV|uV|mV|kV|V|µA|μA|uA|mA|A|mW|kW|W|µJ|μJ|uJ|mJ|kJ|J|MHz|kHz|Hz|MPa|kPa|Pa|mm|cm|km|ms|°C|K|m|s)(?![A-Za-z_])"
         for m in re.finditer(unit_pattern, text):
             if not in_comment(m.start()):
                 apply_range("unit", m.start(), m.end())

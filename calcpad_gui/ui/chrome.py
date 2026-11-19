@@ -14,6 +14,38 @@ class ChromeActions:
     def _apply_app_theme(self):
         dark = bool(self.settings.get("dark_preview", False))
 
+        # Adapt syntax highlighting colors to the active editor theme.
+        light_highlight_colors = {
+            "var": "#0066dd",
+            "unit": "#119911",
+            "func": "#7a3db8",
+            "number": "#cc0088",
+            "bracket": "#cc0088",
+            "op": "#c08030",
+            "keyword": "#cc0088",
+            "text": "#006400",
+        }
+
+        dark_highlight_colors = {
+            "var": "#75b7ff",
+            "unit": "#7ec987",
+            "func": "#c792ea",
+            "number": "#f78cbe",
+            "bracket": "#f78cbe",
+            "op": "#ff9f43",
+            "keyword": "#f78cbe",
+            "text": "#ffd866",
+        }
+
+        colors = dark_highlight_colors if dark else light_highlight_colors
+
+        try:
+            for name, color in colors.items():
+                if name in self._hl_tags:
+                    self._hl_tags[name].set_property("foreground", color)
+        except Exception:
+            pass
+
         try:
             self.editor.set_highlight_current_line(not dark)
         except Exception:
@@ -37,7 +69,7 @@ class ChromeActions:
                 textview#calcpad-editor,
                 textview#calcpad-editor text {
                     background-color: #1e1e1e;
-                    color: #d8d8d8;
+                    color: #ffffff;
                     caret-color: #ffffff;
                 }
 
